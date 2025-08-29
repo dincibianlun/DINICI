@@ -1,104 +1,113 @@
-import { useState, useEffect } from 'react'
-import { 
-  Button, 
-  Input, 
-  Tabs, 
-  Space, 
-  Divider, 
-  Form, 
-  Message 
-} from 'tdesign-react'
-import { signUp, signIn } from '../services/authService'
-import { supabase } from '../lib/supabaseClient'
-import { PasswordReset } from '../components/PasswordReset'
+import { useState, useEffect } from 'react';
+import { Button, Input, Tabs, Space, Divider, Form, Message } from 'tdesign-react';
+import { signUp, signIn } from '../services/authService';
+import { supabase } from '../lib/supabaseClient';
+import PasswordReset from '../components/PasswordReset';
 
-const tabList = [
+// 标签列表类型定义
+export interface TabItem {
+  value: string;
+  label: string;
+}
+
+// 表单错误类型定义
+export interface FormErrors {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+const tabList: TabItem[] = [
   { value: 'login', label: '登录' },
   { value: 'register', label: '注册' },
   { value: 'reset', label: '重置密码' }
-]
+];
 
-export const AuthPage = () => {
-  const [tab, setTab] = useState('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [formErrors, setFormErrors] = useState({ email: '', password: '', confirmPassword: '' })
-  const [showPassword, setShowPassword] = useState(false)
-  const [form] = Form.useForm()
+export default function AuthPage() {
+  const [tab, setTab] = useState<string>('login');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [formErrors, setFormErrors] = useState<FormErrors>({
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [form] = Form.useForm();
 
   // 表单验证
-  const validateForm = () => {
-    const errors: { email: string; password: string; confirmPassword: string } = { 
-      email: '', 
-      password: '', 
-      confirmPassword: '' 
-    }
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {
+      email: '',
+      password: '',
+      confirmPassword: ''
+    };
     
     // 邮箱验证
     if (!email.trim()) {
-      errors.email = '请输入邮箱地址'
+      errors.email = '请输入邮箱地址';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = '请输入有效的邮箱地址'
+      errors.email = '请输入有效的邮箱地址';
     }
     
     // 密码验证
     if (!password) {
-      errors.password = '请输入密码'
+      errors.password = '请输入密码';
     } else if (password.length < 6) {
-      errors.password = '密码至少需要6个字符'
+      errors.password = '密码至少需要6个字符';
     }
     
     // 确认密码验证（仅在注册时）
     if (tab === 'register' && password !== confirmPassword) {
-      errors.confirmPassword = '两次输入的密码不一致'
+      errors.confirmPassword = '两次输入的密码不一致';
     }
     
-    setFormErrors(errors)
+    setFormErrors(errors);
     
     // 检查是否有错误
-    return !errors.email && !errors.password && !(tab === 'register' && errors.confirmPassword)
-  }
+    return !errors.email && !errors.password && !(tab === 'register' && errors.confirmPassword);
+  };
 
   // 切换标签时重置表单
   useEffect(() => {
-    setFormErrors({ email: '', password: '', confirmPassword: '' })
-    setShowPassword(false)
-  }, [tab])
+    setFormErrors({ email: '', password: '', confirmPassword: '' });
+    setShowPassword(false);
+  }, [tab]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!validateForm()) {
-      return
+      return;
     }
     
-    setLoading(true)
+    setLoading(true);
     try {
       if (tab === 'login') {
-        const { error } = await signIn(email, password)
-        if (error) throw error
-        Message.success('登录成功，正在跳转...')
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+        Message.success('登录成功，正在跳转...');
         setTimeout(() => {
-          window.location.href = '/debate'
-        }, 1500)
+          window.location.href = '/debate';
+        }, 1500);
       } else if (tab === 'register') {
-        const { error } = await signUp(email, password)
-        if (error) throw error
-        Message.success('注册成功，请检查邮箱验证')
-        setTab('login')
-        setEmail('')
-        setPassword('')
-        setConfirmPassword('')
+        const { error } = await signUp(email, password);
+        if (error) throw error;
+        Message.success('注册成功，请检查邮箱验证');
+        setTab('login');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? 
-        (error.message.includes('Invalid login credentials') ? '邮箱或密码错误' : error.message) : 
-        '操作失败，请重试'
-      Message.error(errorMessage)
+      const errorMessage = error instanceof Error ?
+        (error.message.includes('Invalid login credentials') ? '邮箱或密码错误' : error.message) :
+        '操作失败，请重试';
+      Message.error(errorMessage);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleOAuthLogin = async (provider: 'github' | 'google') => {
     try {
@@ -153,13 +162,8 @@ export const AuthPage = () => {
           <PasswordReset onSuccess={() => setTab('login')} />
         ) : (
           <Form layout="vertical" className="space-y-4" form={form}>
-            <Form.Item 
-              name="email" 
-              label="邮箱地址" 
-              required 
-              validateStatus={formErrors.email ? 'error' : undefined}
-              help={formErrors.email}
-            >
+            <div className="form-item">
+              <label className="form-label">邮箱地址</label>
               <Input
                 type="email"
                 value={email}
@@ -169,34 +173,31 @@ export const AuthPage = () => {
                 clearable
                 autoComplete="email"
               />
-            </Form.Item>
+              {formErrors.email && <span className="error-message">{formErrors.email}</span>}
+            </div>
             
-            <Form.Item 
-              name="password" 
-              label="密码" 
-              required 
-              validateStatus={formErrors.password ? 'error' : undefined}
-              help={formErrors.password}
-            >
+            <div className="form-item">
+              <label className="form-label">密码</label>
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(value) => setPassword(value)}
                 placeholder="请输入密码"
                 className="bg-[#374151] border-[#4b5563] focus:border-[#8b5cf6] text-[#f3f4f6]"
-                autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+                clearable
+                autoComplete="current-password"
                 suffix={
                   <Button
                     variant="text"
-                    size="small"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#9ca3af] hover:text-[#f3f4f6]"
+                    className="text-[#9ca3af]"
                   >
                     {showPassword ? '隐藏' : '显示'}
                   </Button>
                 }
               />
-            </Form.Item>
+              {formErrors.password && <span className="error-message">{formErrors.password}</span>}
+            </div>
             
             {tab === 'register' && (
               <Form.Item 

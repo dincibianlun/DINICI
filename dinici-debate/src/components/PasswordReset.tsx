@@ -4,10 +4,7 @@ import { securePasswordReset } from '../patches/passwordResetFix'
 import { Button, Input } from 'tdesign-react'
 
 
-
-import { Button, Input } from 'tdesign-react'
-
-export const PasswordReset = ({ onSuccess }: { onSuccess?: () => void }) => {
+export default function PasswordReset({ onSuccess }: { onSuccess?: () => void }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
