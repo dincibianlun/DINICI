@@ -28,6 +28,9 @@ export const callOpenRouter = async (
 ): Promise<string> => {
   try {
     // 验证参数
+    if (!apiKey) {
+      throw new Error('API密钥为空，请检查配置');
+    }
     if (!model || !messages || !apiKey) {
       throw new Error('缺少必要的参数: model, messages 和 apiKey 都是必需的');
     }
@@ -42,9 +45,21 @@ export const callOpenRouter = async (
         throw new Error('每条消息必须包含 role 和 content 字段');
       }
     }
-
+    // 验证API密钥
+    if (!apiKey || apiKey.trim() === '') {
+      throw new Error('API密钥为空或无效');
+    }
+    // 检查Authorization头格式
+    if (!apiKey.startsWith('sk-')) {
+      console.warn('API密钥格式可能不正确，通常应以sk-开头');
+    }
+    // 移除可能存在的Bearer前缀
+    apiKey = apiKey.replace(/^Bearer\s+/i, '');
+    // 调试日志：输出处理后的API密钥和Authorization头
+    console.log('处理后的API密钥:', apiKey);
+    console.log('构造的Authorization头:', `Bearer ${apiKey}`);
     // 发送 API 请求
-    const response = await fetch('https://api.openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

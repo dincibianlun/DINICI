@@ -1,20 +1,10 @@
 import { supabase } from '../lib/supabaseClient';
+import { AuthError } from '@supabase/supabase-js';
 
-// 认证响应类型定义
+// 简化的认证响应类型定义
 export interface AuthResponse {
-  data?: {
-    user: {
-      id: string;
-      email: string | null;
-      // 其他用户信息字段
-    };
-    session?: {
-      access_token: string;
-      refresh_token: string;
-      // 其他会话信息字段
-    };
-  };
-  error?: Error;
+  data?: any;
+  error?: AuthError | Error | null;
 }
 
 /**
@@ -39,7 +29,23 @@ export const signUp = async (
       password
     });
     
-    return result;
+    // 如果注册成功，同时在users表中创建用户记录
+    if (result.data.user && !result.error) {
+      await supabase
+        .from('users')
+        .upsert({
+          id: result.data.user.id,
+          email: result.data.user.email,
+          role: 'user',
+          created_at: new Date().toISOString(),
+          last_active_at: new Date().toISOString()
+        });
+    }
+    
+    return {
+      data: result.data,
+      error: result.error
+    };
   } catch (error) {
     console.error('注册失败:', error);
     return {
@@ -70,7 +76,21 @@ export const signIn = async (
       password
     });
     
-    return result;
+    // 如果登录成功，更新最后活跃时间
+    if (result.data.user && !result.error) {
+      await supabase
+        .from('users')
+        .upsert({
+          id: result.data.user.id,
+          email: result.data.user.email,
+          last_active_at: new Date().toISOString()
+        });
+    }
+    
+    return {
+      data: result.data,
+      error: result.error
+    };
   } catch (error) {
     console.error('登录失败:', error);
     return {
@@ -83,9 +103,10 @@ export const signIn = async (
  * 用户登出功能
  * @returns 登出操作是否成功
  */
-export const signOut = async (): Promise<{ error?: Error }> => {
+export const signOut = async (): Promise<{ error?: AuthError | Error | null }> => {
   try {
-    return await supabase.auth.signOut();
+    const result = await supabase.auth.signOut();
+    return { error: result.error };
   } catch (error) {
     console.error('登出失败:', error);
     return {
@@ -98,12 +119,7 @@ export const signOut = async (): Promise<{ error?: Error }> => {
  * 获取当前登录用户信息
  * @returns 当前用户信息或null
  */
-export const getCurrentUser = async (): Promise<{
-  data: {
-    user: any | null;
-  };
-  error?: Error;
-}> => {
+export const getCurrentUser = async () => {
   try {
     return await supabase.auth.getUser();
   } catch (error) {
@@ -122,20 +138,24 @@ export const getCurrentUser = async (): Promise<{
  */
 export const resetPassword = async (
   email: string
-): Promise<{ data: { user: null }, error?: Error }> => {
+): Promise<{ data?: any, error?: AuthError | Error | null }> => {
   try {
     // 参数验证
     if (!email) {
       throw new Error('邮箱是必需的');
     }
     
-    return await supabase.auth.resetPasswordForEmail(email, {
+    const result = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`
     });
+    
+    return {
+      data: result.data,
+      error: result.error
+    };
   } catch (error) {
     console.error('重置密码失败:', error);
     return {
-      data: { user: null },
       error: error instanceof Error ? error : new Error('重置密码失败，请重试')
     };
   }
@@ -147,7 +167,11 @@ export const resetPassword = async (
  */
 export const refreshSession = async (): Promise<AuthResponse> => {
   try {
-    return await supabase.auth.refreshSession();
+    const result = await supabase.auth.refreshSession();
+    return {
+      data: result.data,
+      error: result.error
+    };
   } catch (error) {
     console.error('刷新会话失败:', error);
     return {

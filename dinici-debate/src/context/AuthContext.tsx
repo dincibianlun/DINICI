@@ -89,26 +89,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // 调用Supabase函数检查管理员权限
-      const { data, error } = await supabase
-        .rpc('is_admin', { user_id: user.id });
-
-      if (!error && data) {
+      // 简化的管理员检查逻辑 - 基于邮箱或用户表中的角色字段
+      // 这里可以根据实际需求调整管理员判断逻辑
+      const adminEmails = ['admin@dinci.com', 'admin@example.com']; // 可配置的管理员邮箱列表
+      
+      if (user.email && adminEmails.includes(user.email)) {
         setIsAdmin(true);
-        
-        // 获取用户权限
-        const { data: permissions } = await supabase
-          .rpc('get_user_permissions', { user_id: user.id });
-        
-        setUserPermissions(permissions || []);
+        setUserPermissions(['admin', 'user_management', 'content_management']);
       } else {
-        setIsAdmin(false);
-        setUserPermissions([]);
+        // 也可以从用户表中查询角色信息
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (userData?.role === 'admin') {
+          setIsAdmin(true);
+          setUserPermissions(['admin', 'user_management', 'content_management']);
+        } else {
+          setIsAdmin(false);
+          setUserPermissions(['user']);
+        }
       }
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
-      setUserPermissions([]);
+      setUserPermissions(['user']);
     }
   };
 

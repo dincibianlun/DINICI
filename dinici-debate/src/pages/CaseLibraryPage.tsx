@@ -7,12 +7,11 @@ import {
   Tag,
   Button,
   Space,
-  Message,
+  MessagePlugin,
   Loading
 } from 'tdesign-react'
 import { 
   SearchIcon, 
-  TrendingUpIcon, 
   TimeIcon,
   ThumbUpIcon
 } from 'tdesign-icons-react'
@@ -137,21 +136,59 @@ export const CaseLibraryPage = () => {
       .eq('id', caseId)
     
     if (!error) {
-      Message.success('案例已分享到公开库')
+      MessagePlugin.success('案例已分享到公开库')
       fetchCases()
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-purple-300 p-4">
-      <header className="border-b border-cyan-400 pb-4 mb-6">
-        <div className="flex justify-between items-start">
+    <div 
+      style={{
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        color: '#ffffff',
+        padding: '2rem',
+        position: 'relative'
+      }}
+    >
+      {/* 简约网格背景 */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px'
+        }}
+      />
+      
+      <header 
+        style={{
+          borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
+          paddingBottom: '1rem',
+          marginBottom: '1.5rem',
+          position: 'relative',
+          zIndex: 10
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 className="text-3xl font-bold text-cyan-400 mb-2">辩论案例库</h1>
-            <p className="text-sm text-purple-400">浏览其他用户分享的精彩辩论案例</p>
+            <h1 style={{ fontSize: '2rem', fontWeight: 300, color: '#00ffff', marginBottom: '0.5rem' }}>
+              辩论案例库
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: '#888888' }}>浏览其他用户分享的精彩辩论案例</p>
           </div>
           <Link to="/overview">
-            <Button variant="outline" className="border-cyan-400 text-cyan-400">
+            <Button 
+              variant="outline" 
+              style={{
+                border: '1px solid #00ffff',
+                color: '#00ffff',
+                background: 'transparent'
+              }}
+            >
               查看总览
             </Button>
           </Link>
@@ -159,23 +196,34 @@ export const CaseLibraryPage = () => {
       </header>
 
       {/* 搜索和筛选区 */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-gray-800 rounded-lg border border-purple-500/30">
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+      <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          marginBottom: '1.5rem',
+          padding: '1rem',
+          background: 'rgba(255, 255, 255, 0.02)',
+          borderRadius: '8px',
+          border: '1px solid rgba(0, 255, 255, 0.1)'
+        }}
+      >
+        <div style={{ position: 'relative', flex: 1 }}>
+          <SearchIcon style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#888888' }} />
           <Input
             placeholder="搜索辩题或摘要..."
             value={searchText}
             onChange={(value) => setSearchText(value)}
-            className="pl-10 bg-gray-900 border-purple-500 focus:border-cyan-400"
+            style={{ paddingLeft: '2.5rem', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(0, 255, 255, 0.3)' }}
             clearable
           />
         </div>
-        <div className="flex gap-3">
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
           <Select
             value={selectedTag}
             onChange={(value) => setSelectedTag(value as string)}
             options={availableTags}
-            className="w-full md:w-36 bg-gray-900 border-purple-500"
+            style={{ width: '100%', minWidth: '9rem', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(0, 255, 255, 0.3)' }}
           />
           <Select
             value={sortOption}
@@ -186,7 +234,7 @@ export const CaseLibraryPage = () => {
               { label: '浏览最多', value: 'views' },
               { label: '点赞最多', value: 'likes' }
             ]}
-            className="w-full md:w-36 bg-gray-900 border-purple-500"
+            style={{ width: '100%', minWidth: '9rem', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(0, 255, 255, 0.3)' }}
           />
         </div>
       </div>

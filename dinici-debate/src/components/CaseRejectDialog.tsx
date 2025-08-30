@@ -2,13 +2,12 @@ import { Button, Dialog, Textarea } from 'tdesign-react'
 import { useState } from 'react'
 
 interface Props {
-  caseId: string
   visible: boolean
   onClose: () => void
   onSubmit: (reason: string) => Promise<void>
 }
 
-export const CaseRejectDialog = ({ caseId, visible, onClose, onSubmit }: Props) => {
+export const CaseRejectDialog = ({ visible, onClose, onSubmit }: Props) => {
   const [reason, setReason] = useState('')
   const [loading, setLoading] = useState(false)
 

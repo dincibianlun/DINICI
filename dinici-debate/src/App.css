@@ -1,9 +1,11 @@
 /* App级别的样式定义 */
+@import './styles/animations.css';
+
 #root {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 /* 应用容器 */

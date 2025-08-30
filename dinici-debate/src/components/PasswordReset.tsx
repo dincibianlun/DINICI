@@ -26,18 +26,40 @@ onSuccess?.()
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 border-2 border-purple-500 rounded-lg bg-gray-800">
-      <h3 className="text-xl font-bold text-cyan-400 mb-4">找回密码</h3>
+    <div 
+      style={{
+        maxWidth: '28rem',
+        margin: '0 auto',
+        padding: '1.5rem',
+        background: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(0, 255, 255, 0.1)',
+        borderRadius: '8px'
+      }}
+    >
+      <h3 
+        style={{
+          fontSize: '1.25rem',
+          fontWeight: 600,
+          color: '#00ffff',
+          marginBottom: '1rem'
+        }}
+      >
+        找回密码
+      </h3>
       
       {sent ? (
-        <div className="text-center py-4">
-          <p className="text-purple-300 mb-4">
+        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <p style={{ color: '#888888', marginBottom: '1rem' }}>
             我们已向 {email} 发送了密码重置链接
           </p>
           <Button 
             variant="outline" 
             onClick={() => setSent(false)}
-            className="border-cyan-400 text-cyan-400"
+            style={{
+              border: '1px solid #00ffff',
+              color: '#00ffff',
+              background: 'transparent'
+            }}
           >
             重新发送
           </Button>
@@ -49,13 +71,31 @@ onSuccess?.()
             value={email}
             onChange={setEmail}
             placeholder="请输入注册邮箱"
-            className="mb-4 bg-gray-700 border-purple-500"
+            style={{
+              marginBottom: '1rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '4px',
+              color: '#ffffff'
+            }}
+            onFocus={(e: any) => {
+              e.currentTarget.style.borderColor = '#00ffff';
+              e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+            }}
+            onBlur={(e: any) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           />
           <Button
             block
             loading={loading}
             onClick={handleSubmit}
-            className="bg-purple-600 hover:bg-purple-500"
+            style={{
+              background: 'linear-gradient(45deg, #00ffff, #ff00ff)',
+              border: 'none',
+              color: 'white'
+            }}
           >
             发送重置链接
           </Button>

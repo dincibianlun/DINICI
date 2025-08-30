@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Button, Input, Tabs, Space, Divider, Form, Message } from 'tdesign-react';
+import { Button, Input, MessagePlugin } from 'tdesign-react';
 import { signUp, signIn } from '../services/authService';
-import { supabase } from '../lib/supabaseClient';
 import PasswordReset from '../components/PasswordReset';
-
-// 标签列表类型定义
-export interface TabItem {
-  value: string;
-  label: string;
-}
 
 // 表单错误类型定义
 export interface FormErrors {
@@ -16,12 +9,6 @@ export interface FormErrors {
   password: string;
   confirmPassword: string;
 }
-
-const tabList: TabItem[] = [
-  { value: 'login', label: '登录' },
-  { value: 'register', label: '注册' },
-  { value: 'reset', label: '重置密码' }
-];
 
 export default function AuthPage() {
   const [tab, setTab] = useState<string>('login');
@@ -35,7 +22,6 @@ export default function AuthPage() {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [form] = Form.useForm();
 
   // 表单验证
   const validateForm = (): boolean => {
@@ -86,14 +72,14 @@ export default function AuthPage() {
       if (tab === 'login') {
         const { error } = await signIn(email, password);
         if (error) throw error;
-        Message.success('登录成功，正在跳转...');
+        MessagePlugin.success('登录成功，正在跳转...');
         setTimeout(() => {
           window.location.href = '/debate';
         }, 1500);
       } else if (tab === 'register') {
         const { error } = await signUp(email, password);
         if (error) throw error;
-        Message.success('注册成功，请检查邮箱验证');
+        MessagePlugin.success('注册成功，请检查邮箱验证');
         setTab('login');
         setEmail('');
         setPassword('');
@@ -103,160 +89,336 @@ export default function AuthPage() {
       const errorMessage = error instanceof Error ?
         (error.message.includes('Invalid login credentials') ? '邮箱或密码错误' : error.message) :
         '操作失败，请重试';
-      Message.error(errorMessage);
+      MessagePlugin.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleOAuthLogin = async (provider: 'github' | 'google') => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/debate`
-        }
-      })
-      if (error) throw error
-    } catch (error) {
-      Message.error('OAuth登录失败，请重试')
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#111827] to-[#1e1b4b] flex items-center justify-center p-4">
-      <div className="w-full max-w-md border border-[#4b5563] rounded-xl p-8 bg-[#1f2937] shadow-lg fade-in">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#8b5cf6] mb-2">
-            DINCI AI辩论平台
-          </h1>
-          <p className="text-[#9ca3af]">
-            探索AI驱动的智能辩论体验
-          </p>
+    <div 
+      style={{
+        minHeight: '100vh',
+        background: '#0a0a0a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+        position: 'relative'
+      }}
+    >
+      {/* 简约网格背景 */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px'
+        }}
+      />
+
+      {/* 青色荧光装饰 */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '15%',
+          right: '20%',
+          width: '1px',
+          height: '80px',
+          background: 'linear-gradient(to bottom, transparent, #00ffff, transparent)',
+          opacity: 0.4
+        }}
+      />
+
+      <div style={{ width: '100%', maxWidth: '400px', position: 'relative', zIndex: 10 }}>
+        {/* 返回首页 */}
+        <div style={{ marginBottom: '2rem' }}>
+          <Button
+            variant="text"
+            onClick={() => window.history.back()}
+            style={{
+              color: '#00ffff',
+              background: 'none',
+              border: 'none',
+              fontSize: '0.875rem',
+              fontWeight: 300
+            }}
+          >
+            ← 返回首页
+          </Button>
         </div>
+
+        {/* 主要表单容器 */}
+        <div 
+          style={{
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            padding: '3rem 2rem',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          {/* 标题 */}
+          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <h1 
+              style={{
+                fontSize: '2rem',
+                fontWeight: 300,
+                letterSpacing: '0.1em',
+                color: '#ffffff',
+                marginBottom: '0.5rem'
+              }}
+            >
+              DINCI
+            </h1>
+            <div 
+              style={{
+                width: '40px',
+                height: '1px',
+                background: '#00ffff',
+                margin: '0 auto',
+                opacity: 0.6
+              }}
+            />
+          </div>
         
-        <Tabs 
-          value={tab} 
-          onChange={setTab} 
-          className="mb-6"
-          items={[
-            { 
-              value: 'login', 
-              label: '登录', 
-              className: 'text-[#d1d5db] hover:text-[#8b5cf6]'
-            },
-            { 
-              value: 'register', 
-              label: '注册', 
-              className: 'text-[#d1d5db] hover:text-[#8b5cf6]'
-            },
-            { 
-              value: 'reset', 
-              label: '重置密码', 
-              className: 'text-[#d1d5db] hover:text-[#8b5cf6]'
-            }
-          ]}
-        />
+        {/* 简约标签页 */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div 
+            style={{
+              display: 'flex',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '4px',
+              padding: '2px'
+            }}
+          >
+            {['login', 'register', 'reset'].map((tabKey) => (
+              <button
+                key={tabKey}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 400,
+                  borderRadius: '2px',
+                  transition: 'all 0.2s ease',
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: tab === tabKey ? 'rgba(0, 255, 255, 0.1)' : 'transparent',
+                  color: tab === tabKey ? '#00ffff' : '#888888'
+                }}
+                onClick={() => setTab(tabKey)}
+                onMouseEnter={(e) => {
+                  if (tab !== tabKey) {
+                    e.currentTarget.style.color = '#cccccc';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (tab !== tabKey) {
+                    e.currentTarget.style.color = '#888888';
+                  }
+                }}
+              >
+                {tabKey === 'login' ? '登录' : tabKey === 'register' ? '注册' : '重置密码'}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {tab === 'reset' ? (
           <PasswordReset onSuccess={() => setTab('login')} />
         ) : (
-          <Form layout="vertical" className="space-y-4" form={form}>
-            <div className="form-item">
-              <label className="form-label">邮箱地址</label>
+          <div>
+            {/* 邮箱输入 */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  color: '#cccccc',
+                  marginBottom: '0.5rem',
+                  fontWeight: 300
+                }}
+              >
+                邮箱地址
+              </label>
               <Input
-                type="email"
                 value={email}
                 onChange={(value) => setEmail(value)}
                 placeholder="请输入邮箱地址"
-                className="bg-[#374151] border-[#4b5563] focus:border-[#8b5cf6] text-[#f3f4f6]"
-                clearable
-                autoComplete="email"
+                style={{
+                  width: '100%',
+                  height: '3rem',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '4px',
+                  color: '#ffffff',
+                  fontSize: '0.875rem',
+                  padding: '0 1rem',
+                  transition: 'all 0.2s ease',
+                  outline: 'none'
+                }}
+                onFocus={(e: any) => {
+                  e.currentTarget.style.borderColor = '#00ffff';
+                  e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+                }}
+                onBlur={(e: any) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               />
-              {formErrors.email && <span className="error-message">{formErrors.email}</span>}
+              {formErrors.email && (
+                <span style={{ color: '#ff6b6b', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                  {formErrors.email}
+                </span>
+              )}
             </div>
             
-            <div className="form-item">
-              <label className="form-label">密码</label>
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(value) => setPassword(value)}
-                placeholder="请输入密码"
-                className="bg-[#374151] border-[#4b5563] focus:border-[#8b5cf6] text-[#f3f4f6]"
-                clearable
-                autoComplete="current-password"
-                suffix={
-                  <Button
-                    variant="text"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#9ca3af]"
-                  >
-                    {showPassword ? '隐藏' : '显示'}
-                  </Button>
-                }
-              />
-              {formErrors.password && <span className="error-message">{formErrors.password}</span>}
-            </div>
-            
-            {tab === 'register' && (
-              <Form.Item 
-                name="confirmPassword" 
-                label="确认密码" 
-                required 
-                validateStatus={formErrors.confirmPassword ? 'error' : undefined}
-                help={formErrors.confirmPassword}
+            {/* 密码输入 */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label 
+                style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  color: '#cccccc',
+                  marginBottom: '0.5rem',
+                  fontWeight: 300
+                }}
               >
+                密码
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(value) => setPassword(value)}
+                  placeholder="请输入密码"
+                  style={{
+                    width: '100%',
+                    height: '3rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '4px',
+                    color: '#ffffff',
+                    fontSize: '0.875rem',
+                    padding: '0 1rem',
+                    transition: 'all 0.2s ease',
+                    outline: 'none'
+                  }}
+                  onFocus={(e: any) => {
+                    e.currentTarget.style.borderColor = '#00ffff';
+                    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+                  }}
+                  onBlur={(e: any) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                  suffix={
+                    <Button
+                      variant="text"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        color: '#888888',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      {showPassword ? '隐藏' : '显示'}
+                    </Button>
+                  }
+                />
+              </div>
+              {formErrors.password && (
+                <span style={{ color: '#ff6b6b', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                  {formErrors.password}
+                </span>
+              )}
+            </div>
+            
+            {/* 确认密码（注册时） */}
+            {tab === 'register' && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label 
+                  style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    color: '#cccccc',
+                    marginBottom: '0.5rem',
+                    fontWeight: 300
+                  }}
+                >
+                  确认密码
+                </label>
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(value) => setConfirmPassword(value)}
                   placeholder="请再次输入密码"
-                  className="bg-[#374151] border-[#4b5563] focus:border-[#8b5cf6] text-[#f3f4f6]"
-                  autoComplete="new-password"
+                  style={{
+                    width: '100%',
+                    height: '3rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '4px',
+                    color: '#ffffff',
+                    fontSize: '0.875rem',
+                    padding: '0 1rem',
+                    transition: 'all 0.2s ease',
+                    outline: 'none'
+                  }}
+                  onFocus={(e: any) => {
+                    e.currentTarget.style.borderColor = '#00ffff';
+                    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+                  }}
+                  onBlur={(e: any) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
-              </Form.Item>
+                {formErrors.confirmPassword && (
+                  <span style={{ color: '#ff6b6b', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                    {formErrors.confirmPassword}
+                  </span>
+                )}
+              </div>
             )}
             
+            {/* 简约提交按钮 */}
             <Button
               block
               loading={loading}
               onClick={handleSubmit}
-              className="mt-6 h-12 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg transition-all transform hover:scale-[1.02]"
+              style={{
+                width: '100%',
+                height: '3rem',
+                background: 'transparent',
+                border: '1px solid #00ffff',
+                color: '#00ffff',
+                fontSize: '0.875rem',
+                fontWeight: 400,
+                borderRadius: '4px',
+                marginTop: '2rem',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 255, 255, 0.1)';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
               {tab === 'login' ? '登录' : '注册'}
             </Button>
-
-            <Divider className="my-6 text-[#4b5563]">
-              或通过以下方式登录
-            </Divider>
-
-            <Space direction="vertical" className="w-full">
-              <Button
-                variant="outline"
-                block
-                onClick={() => handleOAuthLogin('github')}
-                className="h-12 border-[#06b6d4] text-[#06b6d4] hover:bg-[#06b6d4]/10 transition-all"
-              >
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-                </svg>
-                使用 GitHub 登录
-              </Button>
-              <Button
-                variant="outline"
-                block
-                onClick={() => handleOAuthLogin('google')}
-                className="h-12 border-[#ef4444] text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
-              >
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.48 19.79c-3.17-.47-5.65-2.9-5.65-5.79 0-.67.12-1.32.34-1.94L2.5 5.5v13l3.63-1.62c.85.91 1.96 1.62 3.35 1.91zM19.5 7.38c-.88-.39-1.84-.62-2.86-.62-1.16 0-2.23.3-3.1.83l-1.97-1.97C11.75 4.75 9.9 4.5 7.99 4.5c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.91 0 3.76-.25 5.41-.7l2.06 2.06C15.92 19.8 14.07 20 12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8c1.95 0 3.73.6 5.15 1.6L19.5 7.38z"/>
-                </svg>
-                使用 Google 登录
-              </Button>
-            </Space>
-          </Form>
+          </div>
         )}
+        </div>
       </div>
     </div>
   )

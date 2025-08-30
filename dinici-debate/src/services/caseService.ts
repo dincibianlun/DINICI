@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient'
-import type { Case, SearchOptions } from '../types/case'
+import type { Case } from '../types/case'
 import { recordCaseStats, recordUserActivity } from './analyticsService'
 
 export interface SearchOptions {

@@ -144,39 +144,43 @@ export const useDebateFlow = () => {
 
       // 自由辩论 (3轮)
       setPhase('free_debate');
+      let currentMessages = [...messages]; // 创建本地副本来跟踪最新消息
+      
       for (let i = 0; i < 3; i++) {
         // 获取最新的辩论历史
-        const debateHistory = messages
+        const debateHistory = currentMessages
           .filter(msg => msg.role === 'positive' || msg.role === 'negative')
           .map(msg => ({
             role: msg.role === 'positive' ? 'user' : 'assistant',
             content: msg.content
-          }));
+          })) as Array<{role: 'system' | 'user' | 'assistant', content: string}>;
         
         // 正方回应
         const positiveContext = [
-          { role: 'system', content: `你是正方辩手，正在参与关于"${topic}"的辩论` },
+          { role: 'system' as const, content: `你是正方辩手，正在参与关于"${topic}"的辩论` },
           ...debateHistory,
-          { role: 'user', content: '请继续你的辩论观点' }
+          { role: 'user' as const, content: '请继续你的辩论观点' }
         ];
         const positiveReply = await callOpenRouter(positiveModel, positiveContext, apiKey);
-        await addDebateMessage('positive', positiveReply, VOICE_TYPES.POSITIVE, ttsConfig);
+        const positiveMessage = await addDebateMessage('positive', positiveReply, VOICE_TYPES.POSITIVE, ttsConfig);
+        currentMessages.push(positiveMessage);
 
         // 反方回应
         const negativeContext = [
-          { role: 'system', content: `你是反方辩手，正在参与关于"${topic}"的辩论` },
+          { role: 'system' as const, content: `你是反方辩手，正在参与关于"${topic}"的辩论` },
           ...debateHistory,
-          { role: 'user', content: positiveReply }
+          { role: 'user' as const, content: positiveReply }
         ];
         const negativeReply = await callOpenRouter(negativeModel, negativeContext, apiKey);
-        await addDebateMessage('negative', negativeReply, VOICE_TYPES.NEGATIVE, ttsConfig);
+        const negativeMessage = await addDebateMessage('negative', negativeReply, VOICE_TYPES.NEGATIVE, ttsConfig);
+        currentMessages.push(negativeMessage);
       }
 
       // 裁判总结
       setPhase('judge_summary');
       
-      // 准备裁判所需的完整辩论记录
-      const fullDebateHistory = messages.map(msg => 
+      // 准备裁判所需的完整辩论记录 - 使用当前最新的消息
+      const fullDebateHistory = currentMessages.map(msg => 
         `${msg.role === 'host' ? '主持人' : 
           msg.role === 'positive' ? '正方' : 
           msg.role === 'negative' ? '反方' : '用户'}: ${msg.content}`

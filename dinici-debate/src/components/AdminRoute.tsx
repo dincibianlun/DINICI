@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loading, Message } from 'tdesign-react';
+import { Loading, MessagePlugin } from 'tdesign-react';
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export const AdminRoute = ({
   }
 
   if (!isAdmin) {
-    Message.error('需要管理员权限才能访问此页面');
+    MessagePlugin.error('需要管理员权限才能访问此页面');
     return <Navigate to={redirectPath} replace />;
   }
 
