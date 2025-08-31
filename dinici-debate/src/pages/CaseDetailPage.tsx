@@ -1,34 +1,48 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Space, Loading, Tag, Divider, Typography, Message } from 'tdesign-react';
+import { Card, Button, Loading, Tag, Typography, MessagePlugin } from 'tdesign-react';
 import { supabase } from '../lib/supabaseClient';
 import { ArrowLeftIcon } from 'tdesign-icons-react';
 import { viewCase } from '../services/caseService';
 import { useAuth } from '../context/AuthContext';
+import { Header } from '../components/Header';
+import { Breadcrumb } from '../components/Breadcrumb';
 
-type DebateCaseDetail = {
+// 辩论消息类型
+type DebateMessage = {
+  speaker: string;
+  content: string;
+  phase: string;
+  timestamp: string;
+  wordCount: number;
+};
+
+// 辩论记录类型
+type DebateRecord = {
   id: string;
   topic: string;
   positive_model: string;
   negative_model: string;
-  positive_arguments: string[];
-  negative_arguments: string[];
+  judge_model: string;
+  content: DebateMessage[];
+  conversation?: DebateMessage[];
   created_at: string;
-  tags?: string[];
-  summary: string;
-  views: number;
+  views?: number;
+  likes?: number;
+  user_id: string;
+  is_public: boolean;
 };
 
 export const CaseDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [caseDetail, setCaseDetail] = useState<DebateCaseDetail | null>(null);
+  const [debateRecord, setDebateRecord] = useState<DebateRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     if (!id) return;
-    fetchCaseDetail();
+    fetchDebateRecord();
     
     // 记录案例浏览统计
     if (id) {
@@ -36,7 +50,7 @@ export const CaseDetailPage = () => {
     }
   }, [id, user?.id]);
 
-  const fetchCaseDetail = async () => {
+  const fetchDebateRecord = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -45,11 +59,17 @@ export const CaseDetailPage = () => {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      setCaseDetail(data as DebateCaseDetail);
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      if (data) {
+        setDebateRecord(data as DebateRecord);
+      }
     } catch (err) {
-      console.error('Error fetching case detail:', err);
-      Message.error('获取案例详情失败');
+      console.error('Error fetching debate record:', err);
+      MessagePlugin.error('获取辩论记录失败');
     } finally {
       setLoading(false);
     }
@@ -57,115 +77,141 @@ export const CaseDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-900">
-        <Loading size="large" text="加载案例详情..." />
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
+        <Header />
+        <Breadcrumb />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <Loading size="large" text="加载辩论记录..." />
+        </div>
       </div>
     );
   }
 
-  if (!caseDetail) {
+  if (!debateRecord) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-        <Typography.Title level="h3">案例不存在或已被删除</Typography.Title>
-        <Button onClick={() => navigate('/case-library')} className="mt-4">
-          <ArrowLeftIcon /> 返回案例库
-        </Button>
+      <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
+        <Header />
+        <Breadcrumb />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '2rem' }}>
+          <Typography.Title level="h3" style={{ color: '#ffffff' }}>辩论记录不存在或已被删除</Typography.Title>
+          <Button 
+            onClick={() => navigate('/library')} 
+            style={{ marginTop: '1rem', background: '#00ffff', border: 'none', color: '#000000' }}
+          >
+            <ArrowLeftIcon style={{ marginRight: '0.5rem' }} /> 返回案例库
+          </Button>
+        </div>
       </div>
     );
   }
+
+  // 获取辩论消息数组
+  const messages = debateRecord.content || debateRecord.conversation || [];
+  
+  // 按角色分组消息
+  const roleColors = {
+    '主持人': '#ffd93d',
+    '正方': '#00ff88', 
+    '反方': '#ff6b6b',
+    '裁判': '#00ffff'
+  };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-purple-300 p-4 md:p-8">
-      <Button
-        variant="outline"
-        onClick={() => navigate('/case-library')}
-        className="mb-6 border-cyan-400 text-cyan-400"
-      >
-        <ArrowLeftIcon className="mr-2" /> 返回案例库
-      </Button>
+    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
+      <Header />
+      <Breadcrumb />
+      
+      <div style={{ padding: '2rem' }}>
+        <Button
+          onClick={() => navigate('/library')}
+          style={{ 
+            marginBottom: '2rem', 
+            background: 'transparent', 
+            border: '1px solid #00ffff', 
+            color: '#00ffff'
+          }}
+        >
+          <ArrowLeftIcon style={{ marginRight: '0.5rem' }} /> 返回案例库
+        </Button>
 
-      <Card className="bg-gray-800 border-purple-500/30 shadow-[0_0_20px_rgba(128,0,128,0.3)]">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-2/3">
-            <Typography.Title level="h2" className="text-cyan-400 mb-4">{caseDetail.topic}</Typography.Title>
+        <Card style={{
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid rgba(0, 255, 255, 0.1)',
+          borderRadius: '8px'
+        }}>
+          {/* 辩论信息头部 */}
+          <div style={{ marginBottom: '2rem', padding: '1.5rem', borderBottom: '1px solid rgba(0, 255, 255, 0.1)' }}>
+            <Typography.Title level="h2" style={{ color: '#00ffff', marginBottom: '1rem' }}>
+              {debateRecord.topic}
+            </Typography.Title>
 
-            <div className="flex flex-wrap gap-3 mb-6">
-              <Tag theme="primary" className="bg-purple-900 border-purple-500 text-lg px-4 py-1">正方: {caseDetail.positive_model.split('/')[1]}</Tag>
-              <Tag theme="danger" className="bg-pink-900 border-pink-500 text-lg px-4 py-1">反方: {caseDetail.negative_model.split('/')[1]}</Tag>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <Tag style={{ background: 'rgba(0, 255, 136, 0.1)', border: '1px solid #00ff88', color: '#00ff88' }}>
+                正方：{debateRecord.positive_model.split('/').pop()}
+              </Tag>
+              <Tag style={{ background: 'rgba(255, 107, 107, 0.1)', border: '1px solid #ff6b6b', color: '#ff6b6b' }}>
+                反方：{debateRecord.negative_model.split('/').pop()}
+              </Tag>
+              <Tag style={{ background: 'rgba(0, 255, 255, 0.1)', border: '1px solid #00ffff', color: '#00ffff' }}>
+                裁判：{debateRecord.judge_model.split('/').pop()}
+              </Tag>
             </div>
 
-            <Typography.Paragraph className="text-gray-300 text-lg mb-6 leading-relaxed">
-              {caseDetail.summary}
-            </Typography.Paragraph>
-
-            <div className="mb-8">
-              <Typography.Title level="h4" className="text-cyan-400 mb-3 flex items-center">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full mr-2"></span>
-                正方论点
-              </Typography.Title>
-              <div className="space-y-4 pl-4 border-l-2 border-purple-500/50">
-                {caseDetail.positive_arguments.map((arg, index) => (
-                  <div key={index} className="bg-gray-700/50 p-4 rounded-lg border border-purple-500/20">
-                    <Typography.Paragraph className="text-gray-200">{arg}</Typography.Paragraph>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <Typography.Title level="h4" className="text-pink-400 mb-3 flex items-center">
-                <span className="w-2 h-2 bg-pink-400 rounded-full mr-2"></span>
-                反方论点
-              </Typography.Title>
-              <div className="space-y-4 pl-4 border-l-2 border-pink-500/50">
-                {caseDetail.negative_arguments.map((arg, index) => (
-                  <div key={index} className="bg-gray-700/50 p-4 rounded-lg border border-pink-500/20">
-                    <Typography.Paragraph className="text-gray-200">{arg}</Typography.Paragraph>
-                  </div>
-                ))}
-              </div>
+            <div style={{ display: 'flex', gap: '2rem', fontSize: '0.875rem', color: '#888888' }}>
+              <span>创建时间：{new Date(debateRecord.created_at).toLocaleString()}</span>
+              <span>发言数：{messages.length}</span>
+              {debateRecord.views && <span>浏览：{debateRecord.views}</span>}
             </div>
           </div>
 
-          <div className="md:w-1/3">
-            <Card className="bg-gray-900 border-purple-500/50 h-full">
-              <Typography.Title level="h3" className="text-purple-300 mb-4">案例信息</Typography.Title>
-
-              <div className="space-y-4 text-gray-300">
-                <div>
-                  <Typography.Text className="text-gray-400 block mb-1">创建时间</Typography.Text>
-                  <Typography.Text>{new Date(caseDetail.created_at).toLocaleString()}</Typography.Text>
-                </div>
-
-                <div>
-                  <Typography.Text className="text-gray-400 block mb-1">浏览次数</Typography.Text>
-                  <Typography.Text>{caseDetail.views}</Typography.Text>
-                </div>
-
-                <div>
-                  <Typography.Text className="text-gray-400 block mb-1">标签</Typography.Text>
-                  <div className="flex flex-wrap gap-2">
-                    {caseDetail.tags?.map(tag => (
-                      <Tag key={tag} variant="outline" className="border-purple-500/50 text-purple-300">{tag}</Tag>
-                    )) || <Typography.Text>无标签</Typography.Text>}
-                  </div>
-                </div>
+          {/* 辩论内容 */}
+          <div style={{ padding: '0 1.5rem 1.5rem' }}>
+            <Typography.Title level="h3" style={{ color: '#00ffff', marginBottom: '1.5rem' }}>
+              辩论记录
+            </Typography.Title>
+            
+            {messages.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#888888' }}>
+                暂无辩论内容
               </div>
-
-              <Divider className="my-6 bg-purple-500/30" />
-
-              <Space direction="vertical" size="large">
-                <Button className="w-full bg-purple-900 hover:bg-purple-800 text-white border-purple-500">
-                  复制辩论链接
-                </Button>
-                <Button className="w-full bg-cyan-900 hover:bg-cyan-800 text-white border-cyan-500">
-                  基于此案例创建辩论
-                </Button>
-              </Space>
-            </Card>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {messages.map((message, index) => {
+                  const roleKey = message.speaker.replace(/（.*?）/, ''); // 移除括号内容
+                  const color = roleColors[roleKey as keyof typeof roleColors] || '#cccccc';
+                  
+                  return (
+                    <div 
+                      key={index}
+                      style={{
+                        padding: '1.5rem',
+                        background: `rgba(${color === '#00ff88' ? '0, 255, 136' : color === '#ff6b6b' ? '255, 107, 107' : color === '#ffd93d' ? '255, 217, 61' : '0, 255, 255'}, 0.05)`,
+                        border: `1px solid rgba(${color === '#00ff88' ? '0, 255, 136' : color === '#ff6b6b' ? '255, 107, 107' : color === '#ffd93d' ? '255, 217, 61' : '0, 255, 255'}, 0.2)`,
+                        borderRadius: '8px',
+                        borderLeft: `4px solid ${color}`
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <span style={{ color, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                          {message.speaker}
+                        </span>
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#888888' }}>
+                          <span>{message.phase}</span>
+                          <span>{message.wordCount}字</span>
+                          <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                      <div style={{ color: '#ffffff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                        {message.content}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };

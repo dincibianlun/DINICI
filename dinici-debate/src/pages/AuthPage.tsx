@@ -169,8 +169,13 @@ export default function AuthPage() {
                 fontWeight: 300,
                 letterSpacing: '0.1em',
                 color: '#ffffff',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
+              onClick={() => window.location.href = '/'}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
               DINCI
             </h1>

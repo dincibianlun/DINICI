@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card,
   Button,
@@ -15,15 +15,24 @@ type Article = {
   id?: string;
   title: string;
   content: string;
+  category?: string;
   tags: string[];
   created_at?: string;
+  is_published?: boolean;
 }
 
-export const ArticleEditor = ({ initialData }: { initialData?: Article }) => {
+interface ArticleEditorProps {
+  initialData?: Article | null;
+  onSuccess?: () => void;
+}
+
+export const ArticleEditor: React.FC<ArticleEditorProps> = ({ initialData, onSuccess }) => {
   const [article, setArticle] = useState<Article>(initialData || {
     title: '',
     content: '',
-    tags: []
+    category: 'tutorial',
+    tags: [],
+    is_published: false
   });
   const [allTags, setAllTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
@@ -59,6 +68,7 @@ export const ArticleEditor = ({ initialData }: { initialData?: Article }) => {
       
       if (error) throw error;
       MessagePlugin.success('文章保存成功');
+      onSuccess?.(); // 调用回调函数
       return data?.[0];
     } catch (err) {
       MessagePlugin.error('保存失败');
@@ -108,6 +118,43 @@ export const ArticleEditor = ({ initialData }: { initialData?: Article }) => {
               color: '#ffffff'
             }}
           />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#00ffff', fontSize: '0.875rem' }}>
+            文章类型
+          </label>
+          <Select
+            value={article.category}
+            onChange={(value) => setArticle({...article, category: value as string})}
+            options={[
+              { label: '📚 教程指南', value: 'tutorial' },
+              { label: '📢 公告通知', value: 'announcement' },
+              { label: '❓ 帮助文档', value: 'help' },
+              { label: '💡 常见问题', value: 'faq' }
+            ]}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(0, 255, 255, 0.3)',
+              color: '#ffffff',
+              width: '100%'
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#00ffff', fontSize: '0.875rem' }}>
+            <input
+              type="checkbox"
+              checked={article.is_published}
+              onChange={(e) => setArticle({...article, is_published: e.target.checked})}
+              style={{ 
+                accentColor: '#00ffff',
+                transform: 'scale(1.2)'
+              }}
+            />
+            立即发布（发布后用户可在帮助中心查看）
+          </label>
         </div>
 
         <div style={{ marginBottom: '1rem' }}>

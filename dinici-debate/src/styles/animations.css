@@ -240,3 +240,60 @@
     animation-duration: 8s;
   }
 }
+
+/* 打字机效果 */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes typewriter-cursor {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scaleY(0.8);
+  }
+}
+
+/* 流式输出效果 */
+.typing-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: #00ffff;
+  animation: typewriter-cursor 1.2s ease-in-out infinite;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+}
+
+/* AI思考动画 */
+@keyframes thinking {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+}
+
+.ai-thinking {
+  animation: thinking 1.5s ease-in-out infinite;
+}

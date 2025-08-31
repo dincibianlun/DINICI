@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from 'tdesign-react';
 import { useNavigate } from 'react-router-dom';
+import { Header } from '../components/Header';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -77,45 +79,21 @@ export const HomePage = () => {
         overflow: 'hidden'
       }}
     >
+      <Header />
+      <Breadcrumb />
       {/* 简约网格背景 */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
           backgroundImage: `
-            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)
+            linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px)
           `,
           backgroundSize: '60px 60px'
         }}
       />
 
-      {/* 青色荧光点缀 */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: '20%',
-          right: '10%',
-          width: '2px',
-          height: '100px',
-          background: 'linear-gradient(to bottom, transparent, #00ffff, transparent)',
-          opacity: 0.6,
-          animation: 'pulse 3s infinite'
-        }}
-      />
-      <div 
-        style={{
-          position: 'absolute',
-          bottom: '30%',
-          left: '15%',
-          width: '100px',
-          height: '2px',
-          background: 'linear-gradient(to right, transparent, #00ffff, transparent)',
-          opacity: 0.6,
-          animation: 'pulse 3s infinite',
-          animationDelay: '1s'
-        }}
-      />
 
       {/* 主要内容 */}
       <div 
@@ -148,12 +126,12 @@ export const HomePage = () => {
             <div 
               style={{
                 position: 'absolute',
-                bottom: '-4px',
+                bottom: '-2px',
                 left: '50%',
                 transform: 'translateX(-50%)',
-                width: '60%',
+                width: '40%',
                 height: '1px',
-                background: 'linear-gradient(to right, transparent, #00ffff, transparent)',
+                background: '#00ffff',
                 opacity: 0.8
               }}
             />
@@ -168,8 +146,7 @@ export const HomePage = () => {
                 letterSpacing: '0.05em'
               }}
             >
-              {currentText}
-              <span style={{ opacity: 0.7, animation: 'pulse 1s infinite' }}>|</span>
+              {currentText}<span style={{ opacity: 0.7 }}>|</span>
             </span>
           </div>
           
@@ -254,27 +231,14 @@ export const HomePage = () => {
             size="large"
             onClick={handleStart}
             style={{
-              background: 'transparent',
-              border: '1px solid #00ffff',
-              color: '#00ffff',
+              background: '#00ffff',
+              border: 'none',
+              color: '#000000',
               padding: '1rem 3rem',
               fontSize: '1rem',
-              fontWeight: 400,
-              borderRadius: '4px',
-              transition: 'all 0.3s ease',
-              cursor: 'pointer',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 255, 255, 0.1)';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.3)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.boxShadow = 'none';
-              e.currentTarget.style.transform = 'translateY(0)';
+              fontWeight: 500,
+              borderRadius: '6px',
+              cursor: 'pointer'
             }}
           >
             开始体验
@@ -298,9 +262,9 @@ export const HomePage = () => {
             bottom: '2rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            width: '60px',
+            width: '40px',
             height: '1px',
-            background: 'linear-gradient(to right, transparent, #00ffff, transparent)',
+            background: '#00ffff',
             opacity: 0.5
           }}
         />

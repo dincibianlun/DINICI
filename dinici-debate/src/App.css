@@ -170,3 +170,76 @@
   visibility: visible;
   opacity: 1;
 }
+
+/* TDesign Select组件下拉菜单样式修复 */
+.model-select-popup {
+  z-index: 9999 !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  background: rgba(10, 10, 10, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.model-select-popup .t-select-option {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+.model-select-popup .t-select-option:hover {
+  background: rgba(0, 255, 255, 0.1) !important;
+}
+
+.model-select-popup .t-select-option--selected {
+  background: rgba(0, 255, 255, 0.2) !important;
+  color: #00ffff !important;
+}
+
+/* Header和Breadcrumb组件样式 */
+.user-menu-popup {
+  z-index: 9999 !important;
+  border: 1px solid rgba(0, 255, 255, 0.3) !important;
+  background: rgba(10, 10, 10, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.user-menu-popup .t-dropdown-menu {
+  background: rgba(10, 10, 10, 0.95) !important;
+  border: none !important;
+}
+
+.user-menu-popup .t-dropdown-item {
+  color: #ffffff !important;
+  background: transparent !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.user-menu-popup .t-dropdown-item:hover {
+  background: rgba(0, 255, 255, 0.1) !important;
+  color: #00ffff !important;
+}
+
+/* ProfilePage表格暗色主题样式 */
+.dark-table .t-table {
+  background: transparent !important;
+  border: 1px solid rgba(0, 255, 255, 0.1) !important;
+}
+
+.dark-table .t-table__header {
+  background: rgba(0, 255, 255, 0.05) !important;
+}
+
+.dark-table .t-table__header th {
+  color: #00ffff !important;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2) !important;
+  background: transparent !important;
+}
+
+.dark-table .t-table__body td {
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: transparent !important;
+}
+
+.dark-table .t-table__body tr:hover td {
+  background: rgba(0, 255, 255, 0.05) !important;
+}

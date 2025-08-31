@@ -119,9 +119,9 @@ DINCI AI辩论是一款能够调用 OpenRouter 集成的多种主流 AI 模型�
 
 TTS语音Voice_type要求指定 请求方式请参考下方语音合成接口文档
 
-正方：Voice_type：zh_female_sajiaonvyou_moon_bigtts
-反方：Voice_type：zh_female_shuangkuaisisi_moon_bigtts
-裁判：Voice_type：zh_female_meilinvyou_moon_bigtts
+正方：zh_male_yangguangqingnian_emo_v2_mars_bigtts
+裁判：zh_female_linjuayi_emo_v2_mars_bigtts
+反方：zh_female_shuangkuaisisi_emo_v2_mars_bigtts
 
 ### **五、数据存储设计**
 

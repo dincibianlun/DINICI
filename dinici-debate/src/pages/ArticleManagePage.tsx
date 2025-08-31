@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { 
   Card,
   Table,
@@ -6,87 +6,86 @@ import {
   Tag,
   Space,
   Loading,
-  Dialog
-} from 'tdesign-react'
-import { supabase } from '../lib/supabaseClient'
-import { useAuth } from '../context/AuthContext'
-import { ArticleEditor } from '../components/ArticleEditor'
-import { Link } from 'react-router-dom'
+  Dialog,
+  MessagePlugin
+} from 'tdesign-react';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import { ArticleEditor } from '../components/ArticleEditor';
+import { Link } from 'react-router-dom';
 
 type Article = {
-  id: string
-  title: string
-  tags: string[]
-  created_at: string
-}
+  id: string;
+  title: string;
+  tags: string[];
+  created_at: string;
+  content?: string;
+  category?: string;
+  is_published?: boolean;
+};
 
-export const ArticleManagePage = () => {
-  const [articles, setArticles] = useState<Article[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editVisible, setEditVisible] = useState(false)
-  const [currentArticle, setCurrentArticle] = useState(null)
-  const { user } = useAuth()
+export const ArticleManagePage: React.FC = () => {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editVisible, setEditVisible] = useState(false);
+  const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchArticles()
-  }, [])
+    fetchArticles();
+  }, []);
 
   const fetchArticles = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const { data, error } = await supabase
-        .from('articles')
-        .select('id,title,tags,created_at')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
+        .from('tutorial_articles')
+        .select('id,title,tags,created_at,category,is_published')
+        .eq('author_id', user?.id)
+        .order('created_at', { ascending: false });
       
-      if (error) throw error
-      setArticles(data || [])
+      if (error) throw error;
+      setArticles(data || []);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleEdit = (article: Article) => {
-    setCurrentArticle(article)
-    setEditVisible(true)
-  }
+    setCurrentArticle(article);
+    setEditVisible(true);
+  };
 
   const handleCreate = () => {
-    setCurrentArticle(null)
-    setEditVisible(true)
-  }
+    setCurrentArticle(null);
+    setEditVisible(true);
+  };
 
   const handleDelete = async (id: string) => {
-    const confirm = await Dialog.confirm({
-      header: '确认删除',
-      body: '确定要删除这篇文章吗？此操作不可撤销。',
-      confirmBtn: '删除',
-      cancelBtn: '取消'
-    })
-    
-    if (confirm) {
+    if (window.confirm('确定要删除这篇文章吗？此操作不可撤销。')) {
       try {
         const { error } = await supabase
-          .from('articles')
+          .from('tutorial_articles')
           .delete()
-          .eq('id', id)
+          .eq('id', id);
         
-        if (error) throw error
-        fetchArticles()
+        if (error) throw error;
+        MessagePlugin.success('文章删除成功');
+        fetchArticles();
       } catch (err) {
-        console.error(err)
+        console.error(err);
+        MessagePlugin.error('删除失败');
       }
     }
-  }
+  };
 
   const columns = [
     {
       title: '标题',
       colKey: 'title',
-      cell: ({ row }) => (
+      cell: ({ row }: { row: Article }) => (
         <Link 
           to={`/article/${row.id}`} 
           className="text-cyan-400 hover:underline"
@@ -98,9 +97,9 @@ export const ArticleManagePage = () => {
     {
       title: '标签',
       colKey: 'tags',
-      cell: ({ row }) => (
+      cell: ({ row }: { row: Article }) => (
         <Space>
-          {row.tags.map(tag => (
+          {row.tags.map((tag: string) => (
             <Tag key={tag} theme="primary" className="bg-purple-900 border-purple-500">
               {tag}
             </Tag>
@@ -111,12 +110,12 @@ export const ArticleManagePage = () => {
     {
       title: '创建时间',
       colKey: 'created_at',
-      cell: ({ row }) => new Date(row.created_at).toLocaleString()
+      cell: ({ row }: { row: Article }) => new Date(row.created_at).toLocaleString()
     },
     {
       title: '操作',
       colKey: 'actions',
-      cell: ({ row }) => (
+      cell: ({ row }: { row: Article }) => (
         <Space>
           <Button 
             variant="outline" 
@@ -178,13 +177,19 @@ export const ArticleManagePage = () => {
         className="bg-gray-800"
       >
         <ArticleEditor 
-          initialData={currentArticle}
+          initialData={currentArticle ? {
+            id: currentArticle.id,
+            title: currentArticle.title,
+            content: currentArticle.content || '',
+            tags: currentArticle.tags,
+            created_at: currentArticle.created_at
+          } : null}
           onSuccess={() => {
-            setEditVisible(false)
-            fetchArticles()
+            setEditVisible(false);
+            fetchArticles();
           }}
         />
       </Dialog>
     </div>
-  )
-}
+  );
+};

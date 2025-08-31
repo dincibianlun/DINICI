@@ -1,12 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
-import { DebatePage } from './pages/DebatePage';
+import { EnhancedDebatePage } from './pages/EnhancedDebatePage';
 import { CaseLibraryPage } from './pages/CaseLibraryPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CaseDetailPage } from './pages/CaseDetailPage';
 import { CaseOverviewPage } from './pages/CaseOverviewPage';
 import { TTSSettingsPage } from './pages/TTSSettingsPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { ArticleDetailPage } from './pages/ArticleDetailPage';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
@@ -22,14 +24,22 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/debate" element={<DebatePage />} />
+            <Route path="/debate" element={<EnhancedDebatePage />} />
             
             {/* 案例库相关路由 - 允许游客访问 */}
             <Route path="/library" element={<CaseLibraryPage />} />
             <Route path="/library/:id" element={<CaseDetailPage />} />
             
-            {/* 案例总览 - 允许游客访问 */}
+            {/* 帮助中心（原总览页面）- 允许游客访问 */}
             <Route path="/overview" element={<CaseOverviewPage />} />
+            
+            {/* 文章详情页面 - 允许游客访问 */}
+            <Route path="/article/:id" element={<ArticleDetailPage />} />
+            
+            {/* 用户中心 - 需要登录 */}
+            <Route path="/profile" element={<PrivateRoute />}>
+              <Route index element={<ProfilePage />} />
+            </Route>
             
             {/* 设置页面 - 需要登录 */}
             <Route path="/settings" element={<PrivateRoute />}>

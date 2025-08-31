@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { 
   Button, 
   Input, 
-  Dialog, 
-  MessagePlugin
+  MessagePlugin,
+  Card
 } from 'tdesign-react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { Header } from '../components/Header';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 type ApiKey = {
   id: string;
@@ -27,8 +29,8 @@ export const SettingsPage = () => {
   const navigate = useNavigate();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [ttsConfigs, setTtsConfigs] = useState<TTSConfig[]>([]);
-  const [visible, setVisible] = useState(false);
-  const [currentService, setCurrentService] = useState<'openrouter' | 'tts'>('openrouter');
+  const [showOpenRouterForm, setShowOpenRouterForm] = useState(false);
+  const [showTTSForm, setShowTTSForm] = useState(false);
   const [formData, setFormData] = useState({
     key_name: '',
     api_key: '',
@@ -88,17 +90,29 @@ export const SettingsPage = () => {
     }
   };
 
-  const handleAddKey = () => {
+  const handleAddOpenRouter = () => {
     setFormData({
       key_name: '',
       api_key: '',
       appid: '',
       access_token: ''
     });
-    setVisible(true);
+    setShowOpenRouterForm(true);
+    setShowTTSForm(false);
   };
 
-  const handleSubmit = async () => {
+  const handleAddTTS = () => {
+    setFormData({
+      key_name: '',
+      api_key: '',
+      appid: '',
+      access_token: ''
+    });
+    setShowTTSForm(true);
+    setShowOpenRouterForm(false);
+  };
+
+  const handleSubmitOpenRouter = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -106,64 +120,68 @@ export const SettingsPage = () => {
         return;
       }
 
-      if (currentService === 'openrouter') {
-        if (!formData.key_name || !formData.api_key) {
-          MessagePlugin.error('请填写完整信息');
-          return;
-        }
+      if (!formData.key_name || !formData.api_key) {
+        MessagePlugin.error('请填写完整信息');
+        return;
+      }
 
-        const { error } = await supabase
-          .from('api_keys')
-          .insert({
-            user_id: user.id,
-            key_name: formData.key_name,
-            api_key: formData.api_key,
-            service_type: 'openrouter'
-          });
-        console.log('插入API密钥的目标表名: api_keys');
-        console.log('插入的数据:', {
+      const { error } = await supabase
+        .from('api_keys')
+        .insert({
           user_id: user.id,
           key_name: formData.key_name,
           api_key: formData.api_key,
           service_type: 'openrouter'
         });
-        
-        if (!error) {
-          MessagePlugin.success('API密钥添加成功');
-          fetchApiKeys();
-          setVisible(false);
-        } else {
-          MessagePlugin.error('添加失败: ' + error.message);
-        }
+      
+      if (!error) {
+        MessagePlugin.success('API密钥添加成功');
+        fetchApiKeys();
+        setShowOpenRouterForm(false);
+        setFormData({ key_name: '', api_key: '', appid: '', access_token: '' });
       } else {
-        if (!formData.appid || !formData.access_token) {
-          MessagePlugin.error('请填写完整信息');
-          return;
-        }
+        MessagePlugin.error('添加失败: ' + error.message);
+      }
+    } catch (err) {
+      MessagePlugin.error('操作失败');
+    }
+  };
 
-        // TTS配置保存为JSON格式
-        const ttsConfig = {
-          appid: formData.appid,
-          access_token: formData.access_token
-        };
-        
-        const { error } = await supabase
-          .from('api_keys')
-          .insert({
-            user_id: user.id,
-            key_name: 'TTS配置',
-            api_key: JSON.stringify(ttsConfig),
-            service_type: 'tts'
-          });
-        
-        if (!error) {
-          MessagePlugin.success('TTS配置添加成功');
-          fetchApiKeys();
-          fetchTtsConfigs();
-          setVisible(false);
-        } else {
-          MessagePlugin.error('添加失败: ' + error.message);
-        }
+  const handleSubmitTTS = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        MessagePlugin.error('请先登录');
+        return;
+      }
+
+      if (!formData.appid || !formData.access_token) {
+        MessagePlugin.error('请填写完整信息');
+        return;
+      }
+
+      const ttsConfig = {
+        appid: formData.appid,
+        access_token: formData.access_token
+      };
+      
+      const { error } = await supabase
+        .from('api_keys')
+        .insert({
+          user_id: user.id,
+          key_name: 'TTS配置',
+          api_key: JSON.stringify(ttsConfig),
+          service_type: 'tts'
+        });
+      
+      if (!error) {
+        MessagePlugin.success('TTS配置添加成功');
+        fetchApiKeys();
+        fetchTtsConfigs();
+        setShowTTSForm(false);
+        setFormData({ key_name: '', api_key: '', appid: '', access_token: '' });
+      } else {
+        MessagePlugin.error('添加失败: ' + error.message);
       }
     } catch (err) {
       MessagePlugin.error('操作失败');
@@ -182,302 +200,379 @@ export const SettingsPage = () => {
   };
 
   return (
-    <div 
-      style={{
-        minHeight: '100vh',
-        background: '#0a0a0a',
-        color: '#ffffff',
-        padding: '2rem',
-        position: 'relative'
-      }}
-    >
-      {/* 简约网格背景 */}
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: `
-            linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px'
-        }}
-      />
+    <div style={{ minHeight: '100vh', background: '#000000', color: '#ffffff' }}>
+      <Header />
+      <Breadcrumb />
       
-      <header 
-        style={{
-          borderBottom: '1px solid rgba(0, 255, 255, 0.3)',
-          paddingBottom: '1rem',
-          marginBottom: '1.5rem',
-          position: 'relative',
-          zIndex: 10
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 300, color: '#00ffff' }}>
-            ⚙️ 密钥与配置管理
-          </h1>
-          <Button
-            onClick={() => navigate('/debate')}
-            style={{
-              background: 'linear-gradient(45deg, #00ffff, #ff00ff)',
-              border: 'none',
-              color: 'white',
-              borderRadius: '0.5rem'
-            }}
-          >
-            返回辩论
-          </Button>
-        </div>
-      </header>
+      <div style={{ padding: '2rem' }}>
+        {/* 主容器 */}
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          {/* 页面标题 */}
+          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <h1 style={{ 
+              fontSize: '2rem', 
+              fontWeight: 400, 
+              color: '#ffffff',
+              marginBottom: '0.5rem'
+            }}>
+              设置
+            </h1>
+            <div 
+              style={{
+                width: '40px',
+                height: '1px',
+                background: '#00ffff',
+                margin: '0 auto',
+                marginBottom: '1rem'
+              }}
+            />
+            <p style={{ 
+              color: '#888888', 
+              fontSize: '0.875rem'
+            }}>
+              配置您的API密钥和语音合成参数
+            </p>
+          </div>
 
-      <main style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {/* OpenRouter密钥管理 */}
-        <div 
-          style={{
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(0, 255, 255, 0.1)',
+          {/* API密钥配置区域 */}
+          <Card style={{
+            background: '#ffffff',
+            border: '1px solid #e0e0e0',
             borderRadius: '8px',
-            padding: '1.5rem'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#00ffff' }}>
-              🤖 OpenRouter API密钥
-            </h2>
-            <Button 
-              onClick={() => {
-                setCurrentService('openrouter');
-                handleAddKey();
-              }}
-              style={{
-                background: 'linear-gradient(45deg, #00ffff, #ff00ff)',
-                border: 'none',
-                color: 'white',
-                borderRadius: '0.5rem'
-              }}
-            >
-              添加密钥
-            </Button>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {apiKeys.length === 0 ? (
-              <p style={{ color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>
-                暂无API密钥，请添加您的OpenRouter密钥
+            padding: '2rem',
+            marginBottom: '2rem',
+            color: '#000000'
+          }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ 
+                fontSize: '1.125rem', 
+                fontWeight: 500, 
+                color: '#000000',
+                marginBottom: '0.5rem'
+              }}>
+                OpenRouter API密钥
+              </h2>
+              <p style={{ color: '#666666', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                用于调用AI模型进行辩论。请在OpenRouter官网获取您的API密钥。
               </p>
-            ) : (
-              apiKeys.map(key => (
-                <div 
-                  key={key.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'rgba(55, 65, 81, 0.5)',
-                    borderRadius: '0.5rem',
-                    border: '1px solid rgba(139, 92, 246, 0.2)'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 'bold', color: '#f3f4f6' }}>{key.key_name}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-                      创建于: {new Date(key.created_at).toLocaleString()}
+            </div>
+
+            {apiKeys.length > 0 ? (
+              <div style={{ marginBottom: '1.5rem' }}>
+                {apiKeys.map(key => (
+                  <div 
+                    key={key.id} 
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '1rem',
+                      background: '#f5f5f5',
+                      border: '1px solid #e0e0e0',
+                      borderRadius: '4px',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 500, color: '#000000' }}>{key.key_name}</div>
+                      <div style={{ color: '#666666', fontSize: '0.75rem' }}>
+                        {key.api_key.slice(0, 8)}...{key.api_key.slice(-4)}
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Button 
-                      variant="text" 
-                      onClick={() => navigator.clipboard.writeText(key.api_key)}
-                      style={{ color: '#22d3ee' }}
-                    >
-                      复制
-                    </Button>
-                    <Button 
-                      variant="text" 
+                      theme="danger" 
+                      size="small" 
+                      variant="text"
                       onClick={() => handleDelete(key.id)}
-                      style={{ color: '#ef4444' }}
+                      style={{ color: '#999999' }}
                     >
                       删除
                     </Button>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* TTS配置管理 */}
-        <div 
-          style={{
-            background: 'rgba(31, 41, 55, 0.8)',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            borderRadius: '0.75rem',
-            padding: '1.5rem'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#22d3ee' }}>
-              🔊 语音合成(TTS)配置
-            </h2>
-            <Button 
-              onClick={() => {
-                setCurrentService('tts');
-                handleAddKey();
-              }}
-              style={{
-                background: 'linear-gradient(45deg, #8b5cf6, #22d3ee)',
-                border: 'none',
-                color: 'white',
-                borderRadius: '0.5rem'
-              }}
-            >
-              添加配置
-            </Button>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {ttsConfigs.length === 0 ? (
-              <p style={{ color: '#9ca3af', textAlign: 'center', padding: '2rem' }}>
-                暂无TTS配置，请添加您的火山引擎TTS配置
-              </p>
+                ))}
+              </div>
             ) : (
-              ttsConfigs.map(config => (
-                <div 
-                  key={config.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '1rem',
-                    background: 'rgba(55, 65, 81, 0.5)',
-                    borderRadius: '0.5rem',
-                    border: '1px solid rgba(139, 92, 246, 0.2)'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 'bold', color: '#f3f4f6' }}>APPID: {config.appid}</div>
-                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-                      创建于: {new Date(config.created_at).toLocaleString()}
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#666666',
+                fontSize: '0.875rem'
+              }}>
+                暂无配置的API密钥
+              </div>
+            )}
+
+            <Button 
+              onClick={handleAddOpenRouter}
+              style={{
+                background: '#00ffff',
+                border: 'none',
+                color: '#000000',
+                borderRadius: '6px',
+                padding: '0.75rem 1.5rem',
+                width: '100%'
+              }}
+            >
+              添加API密钥
+            </Button>
+
+            {/* 内联OpenRouter表单 */}
+            {showOpenRouterForm && (
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1.5rem',
+                background: 'rgba(0, 255, 255, 0.05)',
+                border: '1px solid rgba(0, 255, 255, 0.2)',
+                borderRadius: '8px'
+              }}>
+                <h3 style={{ color: '#00ffff', marginBottom: '1rem', fontSize: '1rem' }}>
+                  添加OpenRouter API密钥
+                </h3>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    color: '#cccccc',
+                    fontSize: '0.875rem'
+                  }}>
+                    密钥名称
+                  </label>
+                  <Input
+                    value={formData.key_name}
+                    onChange={(value) => setFormData({...formData, key_name: value})}
+                    placeholder="请输入密钥名称"
+                    style={{
+                      background: '#000000',
+                      border: '1px solid #333333',
+                      borderRadius: '4px',
+                      color: '#ffffff'
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    color: '#cccccc',
+                    fontSize: '0.875rem'
+                  }}>
+                    API密钥
+                  </label>
+                  <Input
+                    value={formData.api_key}
+                    onChange={(value) => setFormData({...formData, api_key: value})}
+                    placeholder="请输入API密钥（以sk-开头）"
+                    type="password"
+                    style={{
+                      background: '#000000',
+                      border: '1px solid #333333',
+                      borderRadius: '4px',
+                      color: '#ffffff'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <Button
+                    onClick={() => {
+                      setShowOpenRouterForm(false);
+                      setFormData({ key_name: '', api_key: '', appid: '', access_token: '' });
+                    }}
+                    style={{
+                      flex: 1,
+                      background: '#333333',
+                      border: 'none',
+                      color: '#ffffff',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    onClick={handleSubmitOpenRouter}
+                    style={{
+                      flex: 1,
+                      background: '#00ffff',
+                      border: 'none',
+                      color: '#000000',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    确定
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* TTS配置区域 */}
+          <Card style={{
+            background: '#ffffff',
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            padding: '2rem'
+          }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h2 style={{ 
+                fontSize: '1.125rem', 
+                fontWeight: 500, 
+                color: '#00ffff',
+                marginBottom: '0.5rem'
+              }}>
+                语音合成配置
+              </h2>
+              <p style={{ color: '#666666', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                配置火山引擎TTS服务，为辩论内容生成语音。
+              </p>
+            </div>
+
+            {ttsConfigs.length > 0 ? (
+              <div style={{ marginBottom: '1.5rem' }}>
+                {ttsConfigs.map(config => (
+                  <div 
+                    key={config.id} 
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '1rem',
+                      background: '#f8f9fa',
+                      border: '1px solid #00ffff',
+                      borderRadius: '8px',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 500, color: '#ffffff' }}>TTS配置</div>
+                      <div style={{ color: '#888888', fontSize: '0.75rem' }}>
+                        APPID: {config.appid.slice(0, 8)}...
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <Button 
-                      variant="text" 
-                      onClick={() => navigator.clipboard.writeText(config.access_token)}
-                      style={{ color: '#22d3ee' }}
-                    >
-                      复制Token
-                    </Button>
-                    <Button 
-                      variant="text" 
+                      theme="danger" 
+                      size="small" 
+                      variant="text"
                       onClick={() => handleDelete(config.id)}
-                      style={{ color: '#ef4444' }}
+                      style={{ color: '#ff6b6b' }}
                     >
                       删除
                     </Button>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#666666',
+                fontSize: '0.875rem'
+              }}>
+                暂无配置的TTS参数
+              </div>
             )}
-          </div>
-        </div>
-      </main>
 
-      {/* 添加密钥/配置的对话框 */}
-      <Dialog
-        header={currentService === 'openrouter' ? '添加OpenRouter密钥' : '添加TTS配置'}
-        visible={visible}
-        onClose={() => setVisible(false)}
-        footer={
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-            <Button onClick={() => setVisible(false)}>取消</Button>
             <Button 
-              theme="primary" 
-              onClick={handleSubmit}
+              onClick={handleAddTTS}
               style={{
-                background: 'linear-gradient(45deg, #8b5cf6, #22d3ee)',
-                border: 'none'
+                background: '#00ffff',
+                border: 'none',
+                color: '#000000',
+                borderRadius: '6px',
+                padding: '0.75rem 1.5rem',
+                width: '100%'
               }}
             >
-              确认
+              添加TTS配置
             </Button>
-          </div>
-        }
-      >
-        <div style={{ padding: '1rem' }}>
-          {currentService === 'openrouter' ? (
-            <>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#22d3ee', fontWeight: 500 }}>
-                  密钥名称
-                </label>
-                <Input 
-                  value={formData.key_name}
-                  onChange={(value) => setFormData({...formData, key_name: value})}
-                  placeholder="例如: 我的OpenRouter密钥"
-                  style={{
-                    background: 'rgba(55, 65, 81, 0.5)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    color: 'white'
-                  }}
-                />
+
+            {/* 内联TTS表单 */}
+            {showTTSForm && (
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1.5rem',
+                background: 'rgba(0, 255, 255, 0.05)',
+                border: '1px solid rgba(0, 255, 255, 0.2)',
+                borderRadius: '8px'
+              }}>
+                <h3 style={{ color: '#00ffff', marginBottom: '1rem', fontSize: '1rem' }}>
+                  添加TTS配置
+                </h3>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    color: '#cccccc',
+                    fontSize: '0.875rem'
+                  }}>
+                    APPID
+                  </label>
+                  <Input
+                    value={formData.appid}
+                    onChange={(value) => setFormData({...formData, appid: value})}
+                    placeholder="请输入火山引擎TTS的APPID"
+                    style={{
+                      background: '#000000',
+                      border: '1px solid #333333',
+                      borderRadius: '4px',
+                      color: '#ffffff'
+                    }}
+                  />
+                </div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '0.5rem', 
+                    color: '#cccccc',
+                    fontSize: '0.875rem'
+                  }}>
+                    Access Token
+                  </label>
+                  <Input
+                    value={formData.access_token}
+                    onChange={(value) => setFormData({...formData, access_token: value})}
+                    placeholder="请输入Access Token"
+                    type="password"
+                    style={{
+                      background: '#000000',
+                      border: '1px solid #333333',
+                      borderRadius: '4px',
+                      color: '#ffffff'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <Button
+                    onClick={() => {
+                      setShowTTSForm(false);
+                      setFormData({ key_name: '', api_key: '', appid: '', access_token: '' });
+                    }}
+                    style={{
+                      flex: 1,
+                      background: '#333333',
+                      border: 'none',
+                      color: '#ffffff',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    onClick={handleSubmitTTS}
+                    style={{
+                      flex: 1,
+                      background: '#00ffff',
+                      border: 'none',
+                      color: '#000000',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    确定
+                  </Button>
+                </div>
               </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#22d3ee', fontWeight: 500 }}>
-                  API密钥
-                </label>
-                <Input 
-                  type="password"
-                  value={formData.api_key}
-                  onChange={(value) => setFormData({...formData, api_key: value})}
-                  placeholder="输入OpenRouter API密钥"
-                  style={{
-                    background: 'rgba(55, 65, 81, 0.5)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    color: 'white'
-                  }}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#22d3ee', fontWeight: 500 }}>
-                  APPID
-                </label>
-                <Input 
-                  value={formData.appid}
-                  onChange={(value) => setFormData({...formData, appid: value})}
-                  placeholder="输入火山引擎TTS APPID"
-                  style={{
-                    background: 'rgba(55, 65, 81, 0.5)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    color: 'white'
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#22d3ee', fontWeight: 500 }}>
-                  Access Token
-                </label>
-                <Input 
-                  type="password"
-                  value={formData.access_token}
-                  onChange={(value) => setFormData({...formData, access_token: value})}
-                  placeholder="输入火山引擎TTS Access Token"
-                  style={{
-                    background: 'rgba(55, 65, 81, 0.5)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
-                    color: 'white'
-                  }}
-                />
-              </div>
-            </>
-          )}
+            )}
+          </Card>
         </div>
-      </Dialog>
+      </div>
     </div>
   );
 };

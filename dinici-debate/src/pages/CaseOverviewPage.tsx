@@ -1,160 +1,338 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
-  Card, 
-  Tree,
-  Button,
-  Loading,
-  MessagePlugin,
-  Tag
+  Loading
 } from 'tdesign-react'
 import { 
-  TimeIcon,
-  ThumbUpIcon
+  TimeIcon
 } from 'tdesign-icons-react'
 import { supabase } from '../lib/supabaseClient'
+import { Header } from '../components/Header'
+import { Breadcrumb } from '../components/Breadcrumb'
 
-type DebateCase = {
+type Article = {
   id: string
-  topic: string
-  positive_model: string
-  negative_model: string
+  title: string
+  content: string
+  category: string
+  tags: string[]
   created_at: string
-  views: number
-  likes: number
-  tags?: string[]
+  is_published: boolean
+  author_id: string
 }
 
-type TagNode = {
+type ArticleCategory = {
   label: string
   value: string
-  children?: TagNode[]
+  count: number
 }
 
 export const CaseOverviewPage = () => {
-  const [popularCases, setPopularCases] = useState<DebateCase[]>([])
-  const [tagTree, setTagTree] = useState<TagNode[]>([])
+  const [articles, setArticles] = useState<Article[]>([])
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>([])
+  const [categories, setCategories] = useState<ArticleCategory[]>([])
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [loading, setLoading] = useState(true)
 
-  // 获取热门案例
   useEffect(() => {
-    const fetchPopularCases = async () => {
-      try {
-        setLoading(true)
-        const { data, error } = await supabase
-          .from('debates')
-          .select('*')
-          .eq('is_public', true)
-          .order('views', { ascending: false })
-          .limit(8)
-        
-        if (!error && data) {
-          setPopularCases(data)
-        }
-      } catch (err) {
-        console.error('加载热门案例失败:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchPopularCases()
+    fetchArticles()
   }, [])
 
-  // 获取标签树
   useEffect(() => {
-    const fetchTagTree = async () => {
-      const { data } = await supabase
-        .from('tags')
-        .select('id,name,category,parent_id')
-        .order('name', { ascending: true })
+    filterArticles()
+    updateCategories()
+  }, [articles, selectedCategory])
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('tutorial_articles')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
       
-      if (data) {
-        const tree = data
-          .filter(tag => !tag.parent_id)
-          .map(tag => ({
-            label: tag.name,
-            value: tag.id,
-            children: data
-              .filter(t => t.parent_id === tag.id)
-              .map(t => ({ label: t.name, value: t.id }))
-          }))
-        
-        setTagTree(tree)
+      if (!error && data) {
+        setArticles(data)
       }
+    } catch (err) {
+      console.error('加载文章失败:', err)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchTagTree()
-  }, [])
+  const filterArticles = () => {
+    if (selectedCategory === 'all') {
+      setFilteredArticles(articles)
+    } else {
+      setFilteredArticles(articles.filter(article => article.category === selectedCategory))
+    }
+  }
+
+  const updateCategories = () => {
+    const categoryMap = new Map<string, { label: string; count: number }>()
+    
+    // 定义分类显示信息
+    const categoryInfo = {
+      'tutorial': { label: '教程指南' },
+      'announcement': { label: '公告通知' },
+      'help': { label: '帮助文档' },
+      'faq': { label: '常见问题' }
+    }
+    
+    // 统计每个分类的文章数量
+    articles.forEach(article => {
+      const current = categoryMap.get(article.category) || { 
+        label: categoryInfo[article.category as keyof typeof categoryInfo]?.label || article.category,
+        count: 0 
+      }
+      categoryMap.set(article.category, { ...current, count: current.count + 1 })
+    })
+    
+    const categoriesArray = Array.from(categoryMap.entries()).map(([value, info]) => ({
+      label: info.label,
+      value,
+      count: info.count
+    }))
+    
+    setCategories([
+      { label: '全部文章', value: 'all', count: articles.length },
+      ...categoriesArray
+    ])
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-purple-300 p-4">
-      <header className="border-b border-cyan-400 pb-4 mb-6">
-        <h1 className="text-3xl font-bold text-cyan-400 mb-2">案例库总览</h1>
-        <p className="text-sm text-purple-400">探索热门辩论案例和分类</p>
-      </header>
+    <div style={{ minHeight: '100vh', background: '#ffffff', color: '#333333' }}>
+      <Header />
+      <Breadcrumb />
+      
+      <div style={{ padding: '2rem' }}>
+        <header 
+          style={{
+            borderBottom: '1px solid #e5e5e5',
+            paddingBottom: '2rem',
+            marginBottom: '2rem'
+          }}
+        >
+          <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
+            <h1 style={{ 
+              fontSize: '2.5rem', 
+              fontWeight: 600, 
+              color: '#1a1a1a', 
+              marginBottom: '1rem',
+              letterSpacing: '-0.02em'
+            }}>
+              帮助中心
+            </h1>
+            <p style={{ 
+              fontSize: '1rem', 
+              color: '#666666', 
+              lineHeight: 1.6,
+              marginBottom: '1.5rem',
+              maxWidth: '480px',
+              margin: '0 auto 1.5rem'
+            }}>
+              专业的AI辩论平台使用指南，为您提供完整的操作说明和解决方案
+            </p>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              gap: '2rem', 
+              fontSize: '0.875rem', 
+              color: '#999999' 
+            }}>
+              <span>{articles.length} 篇文章</span>
+              <span>{categories.length - 1} 个分类</span>
+            </div>
+          </div>
+        </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* 分类导航 */}
-        <div className="lg:col-span-1 bg-gray-800 rounded-lg border border-purple-500/30 p-4">
-          <h2 className="text-xl font-semibold text-cyan-400 mb-4">分类导航</h2>
-          <Tree
-            data={tagTree}
-            className="bg-transparent"
-          />
-        </div>
-
-        {/* 热门案例 */}
-        <div className="lg:col-span-3">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-cyan-400 flex items-center gap-2">
-              <span className="text-orange-400">🔥</span> 热门案例
+        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '2rem' }}>
+          {/* 分类导航 */}
+          <div style={{
+            background: '#fafafa',
+            borderRadius: '8px',
+            border: '1px solid #e5e5e5',
+            padding: '1.5rem'
+          }}>
+            <h2 style={{ 
+              fontSize: '1.125rem', 
+              fontWeight: 600, 
+              color: '#1a1a1a', 
+              marginBottom: '1rem'
+            }}>
+              分类
             </h2>
-            <Link to="/cases">
-              <Button variant="text" className="text-purple-400 hover:text-cyan-400">
-                查看全部案例 →
-              </Button>
-            </Link>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {categories.map(category => (
+                <button
+                  key={category.value}
+                  style={{
+                    textAlign: 'left',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '4px',
+                    background: selectedCategory === category.value 
+                      ? '#1a1a1a' 
+                      : 'transparent',
+                    border: 'none',
+                    color: selectedCategory === category.value ? '#ffffff' : '#666666',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: selectedCategory === category.value ? 500 : 400,
+                    transition: 'all 0.15s ease'
+                  }}
+                  onClick={() => setSelectedCategory(category.value)}
+                  onMouseEnter={(e) => {
+                    if (selectedCategory !== category.value) {
+                      e.currentTarget.style.background = '#f0f0f0'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedCategory !== category.value) {
+                      e.currentTarget.style.background = 'transparent'
+                    }
+                  }}
+                >
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    width: '100%'
+                  }}>
+                    <span>{category.label}</span>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: selectedCategory === category.value ? '#cccccc' : '#999999',
+                      background: selectedCategory === category.value ? 'rgba(255,255,255,0.1)' : '#f0f0f0',
+                      padding: '0.125rem 0.375rem',
+                      borderRadius: '12px'
+                    }}>
+                      {category.count}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-16">
-              <Loading size="large" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {popularCases.map(item => (
-                <Link to={`/case/${item.id}`} key={item.id} className="no-underline">
-                  <Card
-                    bordered
-                    className="h-full bg-gray-800 border-purple-500/30 hover:border-cyan-400 transition-all"
-                  >
-                    <div className="flex flex-col h-full">
-                      <h3 className="text-lg font-bold text-cyan-400 mb-2 line-clamp-2">
-                        {item.topic}
+          {/* 文章列表 */}
+          <div>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '4rem 0' }}>
+                <Loading size="large" content="加载中..." />
+              </div>
+            ) : filteredArticles.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '4rem 2rem',
+                background: '#fafafa',
+                borderRadius: '8px',
+                border: '1px solid #e5e5e5'
+              }}>
+                <p style={{ color: '#999999', fontSize: '1rem' }}>暂无内容</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {filteredArticles.map(article => (
+                <div
+                  key={article.id}
+                  style={{
+                    background: '#ffffff',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#cccccc'
+                    e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#e5e5e5'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                >
+                    <div style={{ marginBottom: '1rem' }}>
+                      <h3 style={{ 
+                        fontSize: '1.125rem', 
+                        fontWeight: 600, 
+                        color: '#1a1a1a', 
+                        marginBottom: '0.5rem',
+                        lineHeight: 1.4
+                      }}>
+                        {article.title}
                       </h3>
-                      <div className="flex gap-2 mb-3 flex-wrap">
-                        <Tag theme="primary" className="bg-purple-900 border-purple-500">
-                          正方: {item.positive_model.split('/')[1]}
-                        </Tag>
-                        <Tag theme="danger" className="bg-pink-900 border-pink-500">
-                          反方: {item.negative_model.split('/')[1]}
-                        </Tag>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
-                        <span className="flex items-center gap-1">
-                          <span>👁️</span> {item.views || 0}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                        <span style={{
+                          background: '#f0f0f0',
+                          color: '#666666',
+                          fontSize: '0.75rem',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          fontWeight: 500
+                        }}>
+                          {categories.find(c => c.value === article.category)?.label || article.category}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <ThumbUpIcon size={14} /> {item.likes || 0}
+                        <span style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#999999'
+                        }}>
+                          {new Date(article.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+                    
+                    <p style={{ 
+                      color: '#666666', 
+                      fontSize: '0.875rem', 
+                      lineHeight: 1.6, 
+                      marginBottom: '1rem'
+                    }}>
+                      {article.content.replace(/[#*`]/g, '').substring(0, 150)}...
+                    </p>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {article.tags?.slice(0, 3).map((tag, index) => (
+                          <span 
+                            key={index}
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#999999',
+                              background: '#f0f0f0',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <Link to={`/article/${article.id}`} style={{ textDecoration: 'none' }}>
+                        <button
+                          style={{
+                            background: '#1a1a1a',
+                            border: 'none',
+                            color: '#ffffff',
+                            fontSize: '0.75rem',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 500
+                          }}
+                        >
+                          查看详情
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
