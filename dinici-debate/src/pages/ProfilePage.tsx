@@ -302,14 +302,15 @@ export const ProfilePage = () => {
               </h3>
               <Link to="/debate">
                 <Button
-                  style={{
-                    background: '#007bff',
-                    border: 'none',
-                    color: 'white'
-                  }}
-                >
-                  开始新辩论
-                </Button>
+                    id="profile-start-debate-btn-1"
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid #e9ecef',
+                      color: '#000000'
+                    }}
+                  >
+                    开始新辩论
+                  </Button>
               </Link>
             </div>
             
@@ -320,18 +321,6 @@ export const ProfilePage = () => {
                 color: '#666666' 
               }}>
                 <p>还没有辩论记录，去开始你的第一场AI辩论吧！</p>
-                <Link to="/debate">
-                  <Button
-                    style={{
-                      background: '#007bff',
-                      border: 'none',
-                      color: 'white',
-                      marginTop: '1rem'
-                    }}
-                  >
-                    开始辩论
-                  </Button>
-                </Link>
               </div>
             ) : (
               <Table 

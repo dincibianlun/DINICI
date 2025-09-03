@@ -3,23 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { 
   Loading
 } from 'tdesign-react'
-import { 
-  TimeIcon
-} from 'tdesign-icons-react'
-import { supabase } from '../lib/supabaseClient'
+
+import '@toast-ui/editor/dist/toastui-editor-viewer.css';
+// @ts-ignore
+import { Viewer } from '@toast-ui/react-editor';
+
 import { Header } from '../components/Header'
 import { Breadcrumb } from '../components/Breadcrumb'
-
-type Article = {
-  id: string
-  title: string
-  content: string
-  category: string
-  tags: string[]
-  created_at: string
-  is_published: boolean
-  author_id: string
-}
+import { useArticleStore, Article } from '../store/articleStore'
 
 export const ArticleDetailPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -27,6 +18,7 @@ export const ArticleDetailPage = () => {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const getArticleById = useArticleStore((state: any) => state.getArticleById)
 
   useEffect(() => {
     if (id) {
@@ -37,26 +29,30 @@ export const ArticleDetailPage = () => {
   const fetchArticle = async (articleId: string) => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('tutorial_articles')
-        .select('*')
-        .eq('id', articleId)
-        .eq('is_published', true)
-        .single()
+      setError(null)
       
-      if (error) {
+      // 使用文章存储获取文章
+      const foundArticle = getArticleById(articleId)
+      
+      if (!foundArticle) {
         setError('文章未找到或已被删除')
+      } else if (!foundArticle.is_published) {
+        setError('文章未发布')
       } else {
-        setArticle(data)
+        setArticle(foundArticle)
       }
     } catch (err) {
       console.error('加载文章失败:', err)
       setError('加载文章时发生错误')
     } finally {
-      setLoading(false)
+      // 模拟加载延迟
+      setTimeout(() => {
+        setLoading(false)
+      }, 500)
     }
   }
 
+  // 获取分类颜色
   const getCategoryColor = (category: string) => {
     const colors = {
       'tutorial': '#1890ff',
@@ -77,17 +73,11 @@ export const ArticleDetailPage = () => {
     return labels[category as keyof typeof labels] || category
   }
 
+  // 格式化文章内容
   const formatContent = (content: string) => {
-    // 简单的 markdown 格式处理
-    return content
-      .replace(/^# (.*$)/gim, '<h1 style="font-size: 2rem; font-weight: bold; color: #00ffff; margin: 2rem 0 1rem 0; border-bottom: 2px solid #00ffff; padding-bottom: 0.5rem;">$1</h1>')
-      .replace(/^## (.*$)/gim, '<h2 style="font-size: 1.5rem; font-weight: 600; color: #00ffff; margin: 1.5rem 0 1rem 0;">$1</h2>')
-      .replace(/^### (.*$)/gim, '<h3 style="font-size: 1.25rem; font-weight: 600; color: #00ffff; margin: 1.25rem 0 0.75rem 0;">$1</h3>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #00ffff; font-weight: 600;">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em style="color: #666666; font-style: italic;">$1</em>')
-      .replace(/`(.*?)`/g, '<code style="background: #f1f3f4; color: #00ffff; padding: 0.125rem 0.25rem; border-radius: 4px; font-family: monospace;">$1</code>')
-      .replace(/\n/g, '<br/>')
-  }
+    // 使用Toast UI Viewer来渲染Markdown内容
+    return content;
+  };
 
   if (loading) {
     return (
@@ -106,7 +96,7 @@ export const ArticleDetailPage = () => {
         <Header />
         <div style={{ padding: '2rem', textAlign: 'center' }}>
           <h1 style={{ color: '#666666', marginBottom: '1rem' }}>页面不存在</h1>
-          <p style={{ color: '#999999', marginBottom: '2rem' }}>{error}</p>
+          <p style={{ color: '#999999', marginBottom: '2rem' }}>{error || '文章不存在'}</p>
           <button 
             onClick={() => navigate('/overview')}
             style={{
@@ -232,10 +222,9 @@ export const ArticleDetailPage = () => {
                 color: '#333333',
                 textAlign: 'left'
               }}
-              dangerouslySetInnerHTML={{ 
-                __html: formatContent(article.content) 
-              }}
-            />
+            >
+              <Viewer initialValue={article.content} />
+            </div>
           </div>
         </div>
       </div>

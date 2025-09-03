@@ -209,7 +209,7 @@ export const synthesizeSpeech = async (
 
 // 预定义的语音类型 - 针对不同辩论角色
 export const VOICE_TYPES = {
-  HOST: 'zh_female_meilinvyou_moon_bigtts', // 主持人-美少女音
+  HOST: 'zh_female_linjuayi_emo_v2_mars_bigtts', // 主持人-林觉艺女音
   POSITIVE: 'zh_male_yangguangqingnian_emo_v2_mars_bigtts', // 正方-阳光青年男音
   NEGATIVE: 'zh_female_shuangkuaisisi_emo_v2_mars_bigtts', // 反方-爽快思思女音
   JUDGE: 'zh_female_linjuayi_emo_v2_mars_bigtts' // 裁判-林觉艺女音

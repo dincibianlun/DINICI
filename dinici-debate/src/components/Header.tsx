@@ -4,7 +4,7 @@ import { Button, Dropdown } from 'tdesign-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Header = () => {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -12,25 +12,21 @@ export const Header = () => {
     { path: '/', label: '首页', icon: '' },
     { path: '/debate', label: '开始辩论', icon: '' },
     { path: '/library', label: '案例库', icon: '' },
-    { path: '/overview', label: '帮助中心', icon: '' }
+    {path: '/overview', label: '帮助中心', icon: ''}
   ];
   
   const userMenuItems = [
     {
-      content: '用户中心',
+      content: <span style={{ color: '#495057', letterSpacing: '0.05em', padding: '0.75rem 1rem', display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center' }}>用户中心</span>,
       value: 'profile',
       onClick: () => navigate('/profile')
     },
     {
-      content: '设置',
+      content: <span style={{ color: '#495057', letterSpacing: '0.05em', padding: '0.75rem 1rem', display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center' }}>设置</span>,
       value: 'settings', 
       onClick: () => navigate('/settings')
     },
-    {
-      content: '退出登录',
-      value: 'logout',
-      onClick: signOut
-    }
+    {      content: <span style={{ color: '#495057', letterSpacing: '0.05em', padding: '0.75rem 1rem', display: 'block', width: '100%', boxSizing: 'border-box', textAlign: 'center' }}>退出登录</span>,      value: 'logout',      onClick: logout    }
   ];
   
   return (
@@ -111,44 +107,50 @@ export const Header = () => {
             options={userMenuItems}
             trigger="click"
             popupProps={{ 
-              placement: 'bottom-right',
-              overlayClassName: 'user-menu-popup'
+              placement: 'bottom-left',
+              overlayClassName: 'user-menu-popup',
+              alignPoint: true,
+              style: { 
+                padding: '0.5rem 0',
+                width: '200px',
+              }
             }}
           >
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '4px',
-              background: 'rgba(0, 255, 255, 0.1)',
-              border: '1px solid #00ffff',
+              gap: '0.75rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              background: '#f8f9fa',
+              border: '1px solid #e9ecef',
               cursor: 'pointer',
-              fontSize: '0.875rem',
-              transition: 'all 0.2s ease'
+              fontSize: '1rem',
+              transition: 'all 0.2s ease',
+              width: '200px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 255, 255, 0.2)';
+              e.currentTarget.style.background = '#e9ecef';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 255, 255, 0.1)';
+              e.currentTarget.style.background = '#f8f9fa';
             }}
             >
               <div style={{
-                width: '24px',
-                height: '24px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
                 background: '#1a1a1a',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#ffffff',
-                fontSize: '0.75rem',
+                fontSize: '0.9rem',
                 fontWeight: 'bold'
               }}>
                 {user.email?.[0]?.toUpperCase()}
               </div>
-              <span style={{ color: '#333333' }}>
+              <span style={{ color: '#333333', fontSize: '1rem' }}>
                 {user.email?.split('@')[0]}
               </span>
             </div>
@@ -157,9 +159,9 @@ export const Header = () => {
           <Button 
             onClick={() => navigate('/auth')}
             style={{
-              background: '#1a1a1a',
-              border: 'none',
-              color: '#ffffff',
+              background: '#ffffff',
+              border: '1px solid #e9ecef',
+              color: '#000000',
               borderRadius: '6px',
               padding: '0.5rem 1.5rem',
               fontSize: '0.875rem'

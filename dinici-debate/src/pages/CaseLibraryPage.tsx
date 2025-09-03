@@ -3,22 +3,17 @@ import { Link } from 'react-router-dom'
 import { 
   Card, 
   Input, 
-  Select, 
-  Tag,
   Button,
-  Space,
   MessagePlugin,
-  Loading
+  Loading,
+  Tag
 } from 'tdesign-react'
-import { 
-  SearchIcon, 
-  TimeIcon,
-  ThumbUpIcon
-} from 'tdesign-icons-react'
+import { SearchOutlined } from '@ant-design/icons';
 import { supabase } from '../lib/supabaseClient'
 import { Header } from '../components/Header'
 import { Breadcrumb } from '../components/Breadcrumb'
 import '../styles/case-library.css'
+import '../styles/input-fix.css'
 
 type DebateCase = {
   id: string
@@ -74,7 +69,7 @@ export const CaseLibraryPage = () => {
     if (searchText) {
       const lowerSearch = searchText.toLowerCase()
       result = result.filter(item => 
-        item.topic.toLowerCase().includes(lowerSearch) || 
+        (item.topic && item.topic.toLowerCase().includes(lowerSearch)) || 
         (item.summary && item.summary.toLowerCase().includes(lowerSearch))
       )
     }
@@ -85,18 +80,6 @@ export const CaseLibraryPage = () => {
     })
     
     setFilteredCases(result)
-  }
-
-  const handleShare = async (caseId: string) => {
-    const { error } = await supabase
-      .from('debates')
-      .update({ is_public: true })
-      .eq('id', caseId)
-    
-    if (!error) {
-      MessagePlugin.success('案例已分享到公开库')
-      fetchCases()
-    }
   }
 
   return (
@@ -162,13 +145,18 @@ export const CaseLibraryPage = () => {
         }}
       >
         <div style={{ position: 'relative', maxWidth: '400px', margin: '0 auto' }}>
-          <SearchIcon style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#999999' }} />
           <Input
             placeholder="搜索辩题或摘要..."
             value={searchText}
             onChange={(value) => setSearchText(value)}
-            style={{ paddingLeft: '2.5rem', background: '#ffffff', border: '1px solid #e9ecef' }}
+            prefixIcon={<SearchOutlined />}
+            style={{ 
+              background: '#ffffff', 
+              border: '1px solid #e9ecef',
+              color: '#333333'
+            }}
             clearable
+            className="tdesign-input-fix"
           />
         </div>
       </div>
@@ -188,7 +176,7 @@ export const CaseLibraryPage = () => {
         }}>
           <p style={{ color: '#666666', marginBottom: '1rem' }}>没有找到匹配的案例</p>
           <Button 
-            variant="text" 
+            theme="default" 
             onClick={fetchCases}
             style={{ color: '#007bff' }}
           >
@@ -204,7 +192,7 @@ export const CaseLibraryPage = () => {
           {filteredCases.map(item => (
             <Link 
               key={item.id} 
-              to={`/case/${item.id}`} 
+              to={`/library/${item.id}`} 
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <Card
@@ -279,27 +267,12 @@ export const CaseLibraryPage = () => {
                   </div>
                   <div style={{ 
                     marginTop: 'auto', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
                     paddingTop: '1rem',
                     borderTop: '1px solid #f1f3f4'
                   }}>
                     <div style={{ fontSize: '0.75rem', color: '#999999' }}>
                       {new Date(item.created_at).toLocaleDateString()}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="small"
-                      className="view-button"
-                      style={{
-                        borderColor: '#007bff',
-                        color: '#007bff',
-                        background: 'transparent'
-                      }}
-                    >
-                      查看详情
-                    </Button>
                   </div>
                 </div>
               </Card>

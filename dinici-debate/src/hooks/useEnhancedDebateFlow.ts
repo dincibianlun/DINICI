@@ -65,7 +65,7 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     speakerOrder: ['host'],
     maxRounds: 1,
     wordLimit: 150,
-    maxWordLimit: 200,
+    maxWordLimit: 280,
     promptTemplate: `你是辩论主持人，请为关于"{topic}"的辩论做开场介绍。
 介绍内容应包括：
 1. 辩论主题阐述
@@ -73,23 +73,25 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
 3. 双方立场介绍
 4. 营造公正严肃的辩论氛围
 
-要求：语言正式专业，控制在{wordLimit}字以内，开场词应具有权威性和引导性。`
+要求：语言正式专业，控制在{wordLimit}字以内，开场词应具有权威性和引导性。不要超过280字。`
   },
   [DebatePhase.STATEMENT]: {
     name: '立论阶段',
     description: '正反双方阐述核心观点',
     speakerOrder: ['positive', 'negative'],
     maxRounds: 1,
-    wordLimit: 300,
-    maxWordLimit: 350,
+    wordLimit: 250,
+    maxWordLimit: 280,
     promptTemplate: `你是{side}，请针对"{topic}"进行立论陈述。
 立论要求：
 1. 明确表明{side}立场
-2. 提出3-4个核心论点
+2. 提出2-3个核心论点
 3. 每个论点要有逻辑支撑
 4. 语言有说服力和感染力
+5. 引用1个专业数据或研究结果支持你的论点
+6. 适当引用一句经典名言增强表达力
 
-控制在{wordLimit}字以内，论述要有条理性和逻辑性。`
+控制在{wordLimit}字以内，不要超过280字，论述要有条理性和逻辑性。`
   },
   [DebatePhase.INQUIRY]: {
     name: '质询阶段',
@@ -97,31 +99,35 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     speakerOrder: ['positive', 'negative'],
     maxRounds: 2,
     wordLimit: 120,
-    maxWordLimit: 150,
+    maxWordLimit: 280,
     promptTemplate: `你是{side}，请向对方提出一个尖锐的质询问题。
 质询要求：
 1. 针对对方立论中的薄弱环节
 2. 问题要具体明确，不能泛泛而谈
 3. 力求揭示对方逻辑漏洞
 4. 问题要有一定攻击性但保持理性
+5. 引用一条相关的专业数据或统计结果
+6. 可以适当引用简短文学名句增强表达力
 
-控制在{wordLimit}字以内，问题要简洁有力。`
+控制在{wordLimit}字以内，不要超过280字，问题要简洁有力。`
   },
   [DebatePhase.REBUTTAL]: {
     name: '驳论阶段',
     description: '双方反驳对方观点',
     speakerOrder: ['negative', 'positive'],
     maxRounds: 1,
-    wordLimit: 250,
-    maxWordLimit: 300,
+    wordLimit: 230,
+    maxWordLimit: 280,
     promptTemplate: `你是{side}，请对对方的立论进行系统性驳论。
 驳论要求：
 1. 指出对方论证的逻辑缺陷
 2. 提供反驳的事实和证据
 3. 削弱对方论点的说服力
 4. 同时强化自己的立场
+5. 引用1个专业数据或研究结果来反驳对方观点
+6. 适当引用一句名人名言增强表达力
 
-控制在{wordLimit}字以内，驳论要有理有据。`
+控制在{wordLimit}字以内，不要超过280字，驳论要有理有据。`
   },
   [DebatePhase.FREE_DEBATE]: {
     name: '自由辩论',
@@ -129,47 +135,53 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     speakerOrder: ['positive', 'negative'],
     maxRounds: 3,
     wordLimit: 180,
-    maxWordLimit: 220,
+    maxWordLimit: 280,
     promptTemplate: `你是{side}，这是自由辩论环节，请进行激烈但理性的辩论。
 自由辩论要求：
 1. 可以攻击对方新的论点
 2. 可以补强自己的观点
 3. 语言要更加灵活生动
 4. 保持逻辑严密性
+5. 引用一个专业数据或研究结果强化论点
+6. 恰当引用一句简短名言增强表达力
 
-控制在{wordLimit}字以内，要有辩论的激情和张力。`
+控制在{wordLimit}字以内，不要超过280字，要有辩论的激情和张力。`
   },
   [DebatePhase.FINAL_SUMMARY]: {
     name: '总结陈词',
     description: '双方最终总结',
     speakerOrder: ['negative', 'positive'],
     maxRounds: 1,
-    wordLimit: 280,
-    maxWordLimit: 320,
+    wordLimit: 250,
+    maxWordLimit: 280,
     promptTemplate: `你是{side}，请进行最终的总结陈词。
 总结陈词要求：
 1. 回顾并强化己方核心论点
 2. 总结对方论证的不足之处
 3. 呼应开篇立论，形成完整闭环
 4. 语言要有感召力和说服力
+5. 引用1个有力的专业数据或研究结论作为支撑
+6. 以一句有力的名言作结，给观众留下深刻印象
 
-控制在{wordLimit}字以内，要体现{side}的胜利信心。`
+控制在{wordLimit}字以内，不要超过280字，要体现{side}的胜利信心。`
   },
   [DebatePhase.JUDGE_VERDICT]: {
     name: '裁判评议',
     description: '裁判评议和宣布结果',
     speakerOrder: ['judge'],
     maxRounds: 1,
-    wordLimit: 350,
-    maxWordLimit: 400,
+    wordLimit: 250,
+    maxWordLimit: 280,
     promptTemplate: `你是辩论裁判，请对刚才关于"{topic}"的辩论进行专业评议。
 评议要求：
 1. 客观分析双方论证的优缺点
 2. 评价论证逻辑、证据充分性、表达能力
 3. 指出各阶段的亮点和不足
 4. 最终给出合理的胜负判决
+5. 引用1个专业理论或观点来支撑你的评判
+6. 以一句富有哲理的名言作结
 
-控制在{wordLimit}字以内，评议要体现专业性和公正性。`
+控制在{wordLimit}字以内，不要超过280字，评议要体现专业性和公正性。`
   },
   [DebatePhase.COMPLETED]: {
     name: '辩论完成',
@@ -327,14 +339,24 @@ export const useEnhancedDebateFlow = () => {
           phaseProgress: ((round * speakers.length) + speakerIndex) / (maxRounds * speakers.length)
         });
         
-        // 生成发言内容
-        await generateSpeech(speaker, phase, config);
-        
-        // 如果是质询阶段，需要处理问答逻辑
-        if (phase === DebatePhase.INQUIRY && speakerIndex % 2 === 0) {
-          // 生成回答
-          const responder = speakers[(speakerIndex + 1) % speakers.length];
-          await generateInquiryResponse(responder, phase, config);
+        // 质询阶段的特殊处理
+        if (phase === DebatePhase.INQUIRY) {
+          if (round === 0 && speakerIndex === 0) {
+            // 第一轮第一个发言者（正方提问），正常生成
+            await generateSpeech(speaker, phase, config);
+          } else if (round === 0 && speakerIndex === 1) {
+            // 第一轮第二个发言者（反方回答并提问）
+            await generateInquiryResponse(speaker, phase, config);
+          } else if (round === 1 && speakerIndex === 0) {
+            // 第二轮第一个发言者（正方回答并提问）
+            await generateInquiryResponse(speaker, phase, config);
+          } else if (round === 1 && speakerIndex === 1) {
+            // 第二轮第二个发言者（反方回答，结束质询）
+            await generateInquiryResponse(speaker, phase, config);
+          }
+        } else {
+          // 非质询阶段，正常生成发言
+          await generateSpeech(speaker, phase, config);
         }
       }
     }
@@ -460,11 +482,21 @@ export const useEnhancedDebateFlow = () => {
     const lastMessage = state.messages[state.messages.length - 1];
     if (!lastMessage) return;
     
-    const answerPrompt = `请回答以下质询问题："${lastMessage.content}"。要求简洁明确，控制在120字以内。`;
+    const answerPrompt = `请先回答以下质询问题："${lastMessage.content}"，然后再向对方提出一个针对性的质询。
+    
+回答要求：
+1. 先清晰回应对方的问题，不回避核心问题
+2. 然后提出你的反质询，针对对方立论的薄弱环节
+3. 回答和质询需明确区分，可以用"回应："和"质询："标明
+4. 引用1个相关的专业数据或统计结果来支持你的论点
+5. 适当引用文学金句或名人名言增强表达力和说服力
+6. 整体风格专业、严谨但不失锐利
+
+控制在280字以内，言简意赅。不要超过280字。`;
     
     const model = getModelForSpeaker(responder, config);
     const messages = [
-      { role: 'system' as const, content: `你是${responder === 'positive' ? '正方' : '反方'}辩手，正在参与关于"${config.topic}"的辩论` },
+      { role: 'system' as const, content: `你是${responder === 'positive' ? '正方' : '反方'}辩手，正在参与关于"${config.topic}"的辩论。你需要回应对方的质询并提出自己的问题。` },
       { role: 'user' as const, content: answerPrompt }
     ];
     
@@ -473,8 +505,8 @@ export const useEnhancedDebateFlow = () => {
         model,
         messages,
         apiKey: config.apiCredentials.openRouterApiKey,
-        targetWordCount: 120,
-        maxWordCount: 150
+        targetWordCount: 200,
+        maxWordCount: 280
       });
       
       const message: DebateMessage = {
@@ -484,7 +516,7 @@ export const useEnhancedDebateFlow = () => {
         phase,
         wordCount: content.length,
         timestamp: Date.now(),
-        speaker: getSpeakerName(responder) + '（回答）'
+        speaker: getSpeakerName(responder) + '（回应与质询）'
       };
       
       updateState(prev => ({
@@ -600,6 +632,8 @@ export const useEnhancedDebateFlow = () => {
    * 保存辩论记录
    */
   const saveDebateRecord = async (config: UserDebateConfig) => {
+    // 注释掉自动保存功能，完全依靠用户手动点击保存按钮
+    /* 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -623,6 +657,10 @@ export const useEnhancedDebateFlow = () => {
     } catch (error) {
       console.error('保存辩论记录时发生异常:', error);
     }
+    */
+    
+    // 只记录日志，不执行实际保存操作
+    console.log('辩论完成，等待用户手动保存');
   };
 
   /**

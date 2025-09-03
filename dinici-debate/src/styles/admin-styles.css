@@ -1,0 +1,542 @@
+/* 管理后台全局样式 */
+.admin-layout {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  min-height: 100vh;
+}
+
+.admin-header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+}
+
+.admin-logo {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1a1a1a !important;
+  margin-right: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.admin-logo-icon {
+  background: linear-gradient(45deg, #007bff, #6610f2);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+}
+
+.admin-sidebar {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e8e8e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow-y: auto;
+}
+
+.admin-sidebar .t-menu {
+  background-color: #ffffff !important;
+  border-right: none !important;
+}
+
+.admin-sidebar .t-menu__item {
+  color: #333333 !important;
+  font-size: 14px;
+  height: 50px;
+  margin: 4px 0;
+}
+
+.admin-sidebar .t-menu__item:hover {
+  background-color: #f5f7fa !important;
+  color: #007bff !important;
+}
+
+.admin-sidebar .t-menu__item.t-is-active {
+  background-color: #e6f7ff !important;
+  color: #007bff !important;
+  font-weight: 500;
+  border-right: 3px solid #007bff;
+}
+
+.admin-content {
+  background-color: #f5f7fa !important;
+  padding: 24px;
+  color: #333333 !important;
+  overflow-y: auto;
+  min-height: calc(100vh - 64px);
+}
+
+/* 卡片样式 */
+.admin-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e8e8e8;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.admin-card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e8e8e8;
+  background-color: #fafafa;
+}
+
+.admin-card-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.admin-card-body {
+  padding: 24px;
+}
+
+/* 统计卡片 */
+.stats-card {
+  height: 100%;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  transition: all 0.3s ease;
+  border: 1px solid #e8e8e8;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.stats-card-icon.blue {
+  background-color: rgba(24, 144, 255, 0.1);
+  color: #1890ff;
+}
+
+.stats-card-icon.green {
+  background-color: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.stats-card-icon.purple {
+  background-color: rgba(114, 46, 209, 0.1);
+  color: #722ed1;
+}
+
+.stats-card-icon.orange {
+  background-color: rgba(250, 173, 20, 0.1);
+  color: #faad14;
+}
+
+.stats-card-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.stats-card-title {
+  font-size: 14px;
+  color: #666666;
+  margin-bottom: 8px;
+}
+
+.stats-card-meta {
+  font-size: 12px;
+  color: #999999;
+  display: flex;
+  align-items: center;
+}
+
+/* 表格样式 */
+.admin-table {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.admin-table .t-table__header {
+  background-color: #fafafa;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.admin-table .t-table__row {
+  transition: all 0.2s ease;
+}
+
+.admin-table .t-table__row:hover {
+  background-color: #f5f7fa;
+}
+
+.admin-table .t-table__cell {
+  color: #333333;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+/* 表单样式 */
+.admin-form-item {
+  margin-bottom: 24px;
+}
+
+.admin-form-label {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.admin-form-input,
+.admin-form-select,
+.admin-form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  transition: all 0.3s;
+  color: #333333;
+  background-color: #ffffff;
+}
+
+.admin-form-input:hover,
+.admin-form-select:hover,
+.admin-form-textarea:hover {
+  border-color: #40a9ff;
+}
+
+.admin-form-input:focus,
+.admin-form-select:focus,
+.admin-form-textarea:focus {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  outline: none;
+}
+
+/* 模态框样式 */
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px 0;
+}
+
+.admin-modal {
+  background-color: white;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.admin-modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.admin-modal-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.admin-modal-body {
+  padding: 24px;
+}
+
+.admin-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 10;
+}
+
+/* 按钮样式 */
+.admin-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+}
+
+.admin-btn-default {
+  background-color: white;
+  border-color: #d9d9d9;
+  color: #333333;
+}
+
+.admin-btn-default:hover {
+  color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.admin-btn-primary {
+  background-color: #1890ff;
+  color: white;
+}
+
+.admin-btn-primary:hover {
+  background-color: #40a9ff;
+}
+
+.admin-btn-danger {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.admin-btn-danger:hover {
+  background-color: #ff7875;
+}
+
+/* 标签样式 */
+.admin-tag {
+  display: inline-block;
+  padding: 0 8px;
+  height: 24px;
+  line-height: 22px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.admin-tag-blue {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #1890ff;
+}
+
+.admin-tag-green {
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #52c41a;
+}
+
+.admin-tag-orange {
+  background-color: #fff7e6;
+  border: 1px solid #ffd591;
+  color: #fa8c16;
+}
+
+.admin-tag-red {
+  background-color: #fff1f0;
+  border: 1px solid #ffa39e;
+  color: #f5222d;
+}
+
+.admin-tag-purple {
+  background-color: #f9f0ff;
+  border: 1px solid #d3adf7;
+  color: #722ed1;
+}
+
+/* 加载状态 */
+.admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+}
+
+/* 使表单在弹窗中可以完整显示 */
+.toast-ui-editor-container {
+  background-color: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.toastui-editor-defaultUI {
+  border: none !important;
+}
+
+/* 覆盖TDesign样式 */
+.t-input {
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 4px !important;
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+.t-input:hover {
+  border-color: #40a9ff !important;
+}
+
+.t-input:focus {
+  border-color: #40a9ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.t-select {
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 4px !important;
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+.t-select:hover {
+  border-color: #40a9ff !important;
+}
+
+.t-textarea {
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 4px !important;
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+.t-textarea:hover {
+  border-color: #40a9ff !important;
+}
+
+.t-textarea:focus {
+  border-color: #40a9ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+.t-table {
+  color: #333333 !important;
+}
+
+.t-pagination {
+  color: #333333 !important;
+}
+
+/* 输入控件特定样式 */
+.t-input__inner {
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+.t-select-input {
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+.t-select-option {
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+.t-select-option:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.t-select-option.t-is-selected {
+  color: #007bff !important;
+  background-color: #e6f7ff !important;
+}
+
+.t-input__clear {
+  color: #999999 !important;
+}
+
+.t-input__clear:hover {
+  color: #666666 !important;
+}
+
+/* 修复编辑器内容文字颜色 */
+.toastui-editor-contents {
+  color: #333333 !important;
+}
+
+.toastui-editor .ProseMirror {
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+/* 修复表单字段文本颜色 */
+input, textarea, select {
+  color: #333333 !important;
+  background-color: #ffffff !important;
+}
+
+/* 编辑器相关样式 */
+.toast-ui-editor-container {
+  z-index: 1;
+  position: relative;
+  background-color: #ffffff;
+}
+
+.toastui-editor-defaultUI {
+  border: 1px solid #e9e9e9 !important;
+  border-radius: 4px !important;
+  background-color: #ffffff !important;
+}
+
+.toastui-editor-defaultUI-toolbar {
+  background-color: #f9f9f9 !important;
+  border-bottom: 1px solid #e9e9e9 !important;
+}
+
+.toastui-editor-main .toastui-editor-md-container,
+.toastui-editor-main .ProseMirror {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  padding: 12px !important;
+  min-height: 200px !important;
+}
+
+.toastui-editor-toolbar-icons {
+  color: #333333 !important;
+}
+
+.toastui-editor-defaultUI-toolbar button {
+  color: #333333 !important;
+}

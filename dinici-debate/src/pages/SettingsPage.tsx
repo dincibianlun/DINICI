@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Breadcrumb } from '../components/Breadcrumb';
+import '../styles/input-fix.css';
 
 type ApiKey = {
   id: string;
@@ -236,23 +237,23 @@ export const SettingsPage = () => {
 
           {/* API密钥配置区域 */}
           <Card style={{
-            background: '#ffffff',
-            border: '1px solid #e0e0e0',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(0, 255, 255, 0.1)',
             borderRadius: '8px',
             padding: '2rem',
             marginBottom: '2rem',
-            color: '#000000'
+            color: '#ffffff'
           }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ 
                 fontSize: '1.125rem', 
                 fontWeight: 500, 
-                color: '#000000',
+                color: '#ffffff',
                 marginBottom: '0.5rem'
               }}>
                 OpenRouter API密钥
               </h2>
-              <p style={{ color: '#666666', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ color: '#888888', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
                 用于调用AI模型进行辩论。请在OpenRouter官网获取您的API密钥。
               </p>
             </div>
@@ -267,15 +268,15 @@ export const SettingsPage = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '1rem',
-                      background: '#f5f5f5',
-                      border: '1px solid #e0e0e0',
-                      borderRadius: '4px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(0, 255, 255, 0.1)',
+                      borderRadius: '8px',
                       marginBottom: '0.5rem'
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 500, color: '#000000' }}>{key.key_name}</div>
-                      <div style={{ color: '#666666', fontSize: '0.75rem' }}>
+                      <div style={{ fontWeight: 500, color: '#ffffff' }}>{key.key_name}</div>
+                      <div style={{ color: '#888888', fontSize: '0.75rem' }}>
                         {key.api_key.slice(0, 8)}...{key.api_key.slice(-4)}
                       </div>
                     </div>
@@ -284,7 +285,7 @@ export const SettingsPage = () => {
                       size="small" 
                       variant="text"
                       onClick={() => handleDelete(key.id)}
-                      style={{ color: '#999999' }}
+                      style={{ color: '#ff6b6b' }}
                     >
                       删除
                     </Button>
@@ -295,7 +296,7 @@ export const SettingsPage = () => {
               <div style={{
                 textAlign: 'center',
                 padding: '2rem',
-                color: '#666666',
+                color: '#888888',
                 fontSize: '0.875rem'
               }}>
                 暂无配置的API密钥
@@ -305,12 +306,15 @@ export const SettingsPage = () => {
             <Button 
               onClick={handleAddOpenRouter}
               style={{
-                background: '#00ffff',
-                border: 'none',
+                background: '#ffffff',
+                border: '1px solid #e9ecef',
                 color: '#000000',
                 borderRadius: '6px',
                 padding: '0.75rem 1.5rem',
-                width: '100%'
+                width: '100%',
+                fontSize: '1rem',
+                minWidth: '120px',
+                transition: 'all 0.2s ease'
               }}
             >
               添加API密钥
@@ -321,11 +325,11 @@ export const SettingsPage = () => {
               <div style={{
                 marginTop: '1.5rem',
                 padding: '1.5rem',
-                background: 'rgba(0, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(0, 255, 255, 0.1)',
                 borderRadius: '8px'
               }}>
-                <h3 style={{ color: '#00ffff', marginBottom: '1rem', fontSize: '1rem' }}>
+                <h3 style={{ color: '#ffffff', marginBottom: '1rem', fontSize: '1rem' }}>
                   添加OpenRouter API密钥
                 </h3>
                 <div style={{ marginBottom: '1rem' }}>
@@ -342,11 +346,12 @@ export const SettingsPage = () => {
                     onChange={(value) => setFormData({...formData, key_name: value})}
                     placeholder="请输入密钥名称"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #333333',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(0, 255, 255, 0.3)',
                       borderRadius: '4px',
                       color: '#ffffff'
                     }}
+                    className="tdesign-input-fix"
                   />
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -364,11 +369,12 @@ export const SettingsPage = () => {
                     placeholder="请输入API密钥（以sk-开头）"
                     type="password"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #333333',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(0, 255, 255, 0.3)',
                       borderRadius: '4px',
                       color: '#ffffff'
                     }}
+                    className="tdesign-input-fix"
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -379,9 +385,9 @@ export const SettingsPage = () => {
                     }}
                     style={{
                       flex: 1,
-                      background: '#333333',
-                      border: 'none',
-                      color: '#ffffff',
+                      background: 'transparent',
+                      border: '1px solid #888888',
+                      color: '#888888',
                       borderRadius: '4px'
                     }}
                   >
@@ -391,10 +397,13 @@ export const SettingsPage = () => {
                     onClick={handleSubmitOpenRouter}
                     style={{
                       flex: 1,
-                      background: '#00ffff',
-                      border: 'none',
+                      background: '#ffffff',
+                      border: '1px solid #e9ecef',
                       color: '#000000',
-                      borderRadius: '4px'
+                      borderRadius: '4px',
+                      fontSize: '1rem',
+                      padding: '0.75rem 1.5rem',
+                      transition: 'all 0.2s ease'
                     }}
                   >
                     确定
@@ -406,21 +415,21 @@ export const SettingsPage = () => {
 
           {/* TTS配置区域 */}
           <Card style={{
-            background: '#ffffff',
-            border: '1px solid #e0e0e0',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(0, 255, 255, 0.1)',
             borderRadius: '8px',
             padding: '2rem'
           }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: 500, 
-                color: '#00ffff',
-                marginBottom: '0.5rem'
-              }}>
+              fontSize: '1.125rem', 
+              fontWeight: 500, 
+              color: '#ffffff',
+              marginBottom: '0.5rem'
+            }}>
                 语音合成配置
               </h2>
-              <p style={{ color: '#666666', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+              <p style={{ color: '#888888', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
                 配置火山引擎TTS服务，为辩论内容生成语音。
               </p>
             </div>
@@ -435,8 +444,8 @@ export const SettingsPage = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '1rem',
-                      background: '#f8f9fa',
-                      border: '1px solid #00ffff',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(0, 255, 255, 0.1)',
                       borderRadius: '8px',
                       marginBottom: '0.5rem'
                     }}
@@ -463,7 +472,7 @@ export const SettingsPage = () => {
               <div style={{
                 textAlign: 'center',
                 padding: '2rem',
-                color: '#666666',
+                color: '#888888',
                 fontSize: '0.875rem'
               }}>
                 暂无配置的TTS参数
@@ -473,12 +482,15 @@ export const SettingsPage = () => {
             <Button 
               onClick={handleAddTTS}
               style={{
-                background: '#00ffff',
-                border: 'none',
+                background: '#ffffff',
+                border: '1px solid #e9ecef',
                 color: '#000000',
                 borderRadius: '6px',
                 padding: '0.75rem 1.5rem',
-                width: '100%'
+                width: '100%',
+                fontSize: '1rem',
+                minWidth: '120px',
+                transition: 'all 0.2s ease'
               }}
             >
               添加TTS配置
@@ -489,11 +501,11 @@ export const SettingsPage = () => {
               <div style={{
                 marginTop: '1.5rem',
                 padding: '1.5rem',
-                background: 'rgba(0, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid rgba(0, 255, 255, 0.1)',
                 borderRadius: '8px'
               }}>
-                <h3 style={{ color: '#00ffff', marginBottom: '1rem', fontSize: '1rem' }}>
+                <h3 style={{ color: '#ffffff', marginBottom: '1rem', fontSize: '1rem' }}>
                   添加TTS配置
                 </h3>
                 <div style={{ marginBottom: '1rem' }}>
@@ -510,11 +522,12 @@ export const SettingsPage = () => {
                     onChange={(value) => setFormData({...formData, appid: value})}
                     placeholder="请输入火山引擎TTS的APPID"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #333333',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(0, 255, 255, 0.3)',
                       borderRadius: '4px',
                       color: '#ffffff'
                     }}
+                    className="tdesign-input-fix"
                   />
                 </div>
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -532,11 +545,12 @@ export const SettingsPage = () => {
                     placeholder="请输入Access Token"
                     type="password"
                     style={{
-                      background: '#000000',
-                      border: '1px solid #333333',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(0, 255, 255, 0.3)',
                       borderRadius: '4px',
                       color: '#ffffff'
                     }}
+                    className="tdesign-input-fix"
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -547,9 +561,9 @@ export const SettingsPage = () => {
                     }}
                     style={{
                       flex: 1,
-                      background: '#333333',
-                      border: 'none',
-                      color: '#ffffff',
+                      background: 'transparent',
+                      border: '1px solid #888888',
+                      color: '#888888',
                       borderRadius: '4px'
                     }}
                   >
@@ -559,10 +573,13 @@ export const SettingsPage = () => {
                     onClick={handleSubmitTTS}
                     style={{
                       flex: 1,
-                      background: '#00ffff',
-                      border: 'none',
+                      background: '#ffffff',
+                      border: '1px solid #e9ecef',
                       color: '#000000',
-                      borderRadius: '4px'
+                      borderRadius: '4px',
+                      fontSize: '1rem',
+                      padding: '0.75rem 1.5rem',
+                      transition: 'all 0.2s ease'
                     }}
                   >
                     确定

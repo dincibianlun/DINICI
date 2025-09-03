@@ -11,12 +11,12 @@ import {
   Col
 } from 'tdesign-react';
 import { 
-  UserIcon, 
-  KeyIcon,
-  TrendingUpIcon,
-  DownloadIcon,
-  ChatIcon
-} from 'tdesign-icons-react';
+  UserOutlined, 
+  KeyOutlined,
+  LineChartOutlined,
+  DownloadOutlined,
+  MessageOutlined
+} from '@ant-design/icons';
 import { 
   getPlatformStats, 
   getUserActivityRanking, 
@@ -165,7 +165,7 @@ const AnalyticsDashboardPage = () => {
             />
             <Button 
               variant="outline" 
-              icon={<DownloadIcon />}
+              icon={<DownloadOutlined style={{ fontSize: 14 }} />}
               onClick={exportData}
               style={{
                 border: '1px solid #00ffff',
@@ -188,15 +188,15 @@ const AnalyticsDashboardPage = () => {
           {/* 关键指标卡片 */}
           <Row gutter={16} style={{ marginBottom: '1.5rem' }}>
             {[
-              { icon: <UserIcon />, title: '总用户数', value: latestStats.total_users || 0, color: '#00ffff' },
-              { icon: <TrendingUpIcon />, title: '活跃用户', value: latestStats.active_users || 0, color: '#00ff88' },
-              { icon: <ChatIcon />, title: '总辩论数', value: latestStats.total_debates || 0, color: '#ff00ff' },
+              { icon: <UserOutlined style={{ fontSize: 18 }} />, title: '总用户数', value: latestStats.total_users || 0, color: '#00ffff' },
+              { icon: <LineChartOutlined style={{ fontSize: 18 }} />, title: '活跃用户', value: latestStats.active_users || 0, color: '#00ff88' },
+              { icon: <MessageOutlined style={{ fontSize: 18 }} />, title: '总辩论数', value: latestStats.total_debates || 0, color: '#ff00ff' },
               { 
-                icon: <KeyIcon />, 
+                icon: <KeyOutlined style={{ fontSize: 18 }} />, 
                 title: '活跃率', 
                 value: latestStats.total_users ? parseFloat(((latestStats.active_users / latestStats.total_users) * 100).toFixed(1)) : 0,
                 suffix: '%',
-                color: '#ffaa00'
+                color: '#ffaa00' 
               }
             ].map((item, index) => (
               <Col xs={12} sm={6} lg={3} key={index}>

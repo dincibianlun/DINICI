@@ -10,11 +10,18 @@ import { TTSSettingsPage } from './pages/TTSSettingsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ArticleDetailPage } from './pages/ArticleDetailPage';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
+import { DashboardPage } from './pages/admin/DashboardPage';
+import { UserManagementPage } from './pages/admin/UserManagementPage';
+import { DebateManagementPage } from './pages/admin/DebateManagementPage';
+import { ReviewManagementPage } from './pages/admin/ReviewManagementPage';
+import { ArticleManagementPage } from './pages/admin/ArticleManagementPage';
 import { AuthProvider } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { AdminRoute } from './components/AdminRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
+import './styles/admin-styles.css';
+import './styles/input-fix.css';
 
 function App() {
   return (
@@ -53,6 +60,15 @@ function App() {
             
             {/* 数据分析看板（仅管理员可访问） */}
             <Route path="/analytics" element={<AdminRoute><AnalyticsDashboardPage /></AdminRoute>} />
+            
+            {/* 管理后台路由 - 仅管理员可访问 */}
+            <Route path="/admin" element={<AdminRoute />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="users" element={<UserManagementPage />} />
+              <Route path="debates" element={<DebateManagementPage />} />
+              <Route path="reviews" element={<ReviewManagementPage />} />
+              <Route path="articles" element={<ArticleManagementPage />} />
+            </Route>
           </Routes>
         </AuthProvider>
       </Router>

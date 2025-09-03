@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Loading, Tag, Typography, MessagePlugin } from 'tdesign-react';
 import { supabase } from '../lib/supabaseClient';
-import { ArrowLeftIcon } from 'tdesign-icons-react';
+import { LeftOutlined } from '@ant-design/icons';
 import { viewCase } from '../services/caseService';
 import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
@@ -77,7 +77,7 @@ export const CaseDetailPage = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
+      <div style={{ minHeight: '100vh', background: '#ffffff', color: '#1a1a1a' }}>
         <Header />
         <Breadcrumb />
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -89,16 +89,16 @@ export const CaseDetailPage = () => {
 
   if (!debateRecord) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
+      <div style={{ minHeight: '100vh', background: '#ffffff', color: '#1a1a1a' }}>
         <Header />
         <Breadcrumb />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '2rem' }}>
-          <Typography.Title level="h3" style={{ color: '#ffffff' }}>辩论记录不存在或已被删除</Typography.Title>
+          <Typography.Title level="h3" style={{ color: '#1a1a1a' }}>辩论记录不存在或已被删除</Typography.Title>
           <Button 
             onClick={() => navigate('/library')} 
-            style={{ marginTop: '1rem', background: '#00ffff', border: 'none', color: '#000000' }}
+            style={{ marginTop: '1rem', background: '#007bff', border: 'none', color: '#ffffff' }}
           >
-            <ArrowLeftIcon style={{ marginRight: '0.5rem' }} /> 返回案例库
+            <LeftOutlined style={{ marginRight: '0.5rem', fontSize: 14 }} /> 返回案例库
           </Button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export const CaseDetailPage = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', color: '#1a1a1a' }}>
       <Header />
       <Breadcrumb />
       
@@ -127,37 +127,37 @@ export const CaseDetailPage = () => {
           style={{ 
             marginBottom: '2rem', 
             background: 'transparent', 
-            border: '1px solid #00ffff', 
-            color: '#00ffff'
+            border: '1px solid #007bff', 
+            color: '#007bff'
           }}
         >
-          <ArrowLeftIcon style={{ marginRight: '0.5rem' }} /> 返回案例库
+          <LeftOutlined style={{ marginRight: '0.5rem', fontSize: 14 }} /> 返回案例库
         </Button>
 
         <Card style={{
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(0, 255, 255, 0.1)',
+          background: '#ffffff',
+          border: '1px solid #e9ecef',
           borderRadius: '8px'
         }}>
           {/* 辩论信息头部 */}
-          <div style={{ marginBottom: '2rem', padding: '1.5rem', borderBottom: '1px solid rgba(0, 255, 255, 0.1)' }}>
-            <Typography.Title level="h2" style={{ color: '#00ffff', marginBottom: '1rem' }}>
+          <div style={{ marginBottom: '2rem', padding: '1.5rem', borderBottom: '1px solid #e9ecef' }}>
+            <Typography.Title level="h2" style={{ color: '#1a1a1a', marginBottom: '1rem' }}>
               {debateRecord.topic}
             </Typography.Title>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-              <Tag style={{ background: 'rgba(0, 255, 136, 0.1)', border: '1px solid #00ff88', color: '#00ff88' }}>
+              <Tag style={{ background: '#e8f5e8', border: '1px solid #28a745', color: '#28a745' }}>
                 正方：{debateRecord.positive_model.split('/').pop()}
               </Tag>
-              <Tag style={{ background: 'rgba(255, 107, 107, 0.1)', border: '1px solid #ff6b6b', color: '#ff6b6b' }}>
+              <Tag style={{ background: '#ffeaea', border: '1px solid #dc3545', color: '#dc3545' }}>
                 反方：{debateRecord.negative_model.split('/').pop()}
               </Tag>
-              <Tag style={{ background: 'rgba(0, 255, 255, 0.1)', border: '1px solid #00ffff', color: '#00ffff' }}>
+              <Tag style={{ background: '#e7f3ff', border: '1px solid #007bff', color: '#007bff' }}>
                 裁判：{debateRecord.judge_model.split('/').pop()}
               </Tag>
             </div>
 
-            <div style={{ display: 'flex', gap: '2rem', fontSize: '0.875rem', color: '#888888' }}>
+            <div style={{ display: 'flex', gap: '2rem', fontSize: '0.875rem', color: '#666666' }}>
               <span>创建时间：{new Date(debateRecord.created_at).toLocaleString()}</span>
               <span>发言数：{messages.length}</span>
               {debateRecord.views && <span>浏览：{debateRecord.views}</span>}
@@ -166,42 +166,51 @@ export const CaseDetailPage = () => {
 
           {/* 辩论内容 */}
           <div style={{ padding: '0 1.5rem 1.5rem' }}>
-            <Typography.Title level="h3" style={{ color: '#00ffff', marginBottom: '1.5rem' }}>
+            <Typography.Title level="h3" style={{ color: '#1a1a1a', marginBottom: '1.5rem' }}>
               辩论记录
             </Typography.Title>
             
             {messages.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem', color: '#888888' }}>
+              <div style={{ textAlign: 'center', padding: '3rem', color: '#666666' }}>
                 暂无辩论内容
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {messages.map((message, index) => {
                   const roleKey = message.speaker.replace(/（.*?）/, ''); // 移除括号内容
-                  const color = roleColors[roleKey as keyof typeof roleColors] || '#cccccc';
+                  
+                  // 更新角色颜色配置
+                  const roleStyles = {
+                    '主持人': { bg: '#fff3cd', border: '#ffc107', color: '#856404' },
+                    '正方': { bg: '#d4edda', border: '#28a745', color: '#155724' },
+                    '反方': { bg: '#f8d7da', border: '#dc3545', color: '#721c24' },
+                    '裁判': { bg: '#cce7ff', border: '#007bff', color: '#004085' }
+                  };
+                  
+                  const style = roleStyles[roleKey as keyof typeof roleStyles] || { bg: '#f8f9fa', border: '#6c757d', color: '#495057' };
                   
                   return (
                     <div 
                       key={index}
                       style={{
                         padding: '1.5rem',
-                        background: `rgba(${color === '#00ff88' ? '0, 255, 136' : color === '#ff6b6b' ? '255, 107, 107' : color === '#ffd93d' ? '255, 217, 61' : '0, 255, 255'}, 0.05)`,
-                        border: `1px solid rgba(${color === '#00ff88' ? '0, 255, 136' : color === '#ff6b6b' ? '255, 107, 107' : color === '#ffd93d' ? '255, 217, 61' : '0, 255, 255'}, 0.2)`,
+                        background: style.bg,
+                        border: `1px solid ${style.border}`,
                         borderRadius: '8px',
-                        borderLeft: `4px solid ${color}`
+                        borderLeft: `4px solid ${style.border}`
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span style={{ color, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                        <span style={{ color: style.color, fontWeight: 'bold', fontSize: '0.875rem' }}>
                           {message.speaker}
                         </span>
-                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#888888' }}>
+                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#666666' }}>
                           <span>{message.phase}</span>
                           <span>{message.wordCount}字</span>
                           <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
                         </div>
                       </div>
-                      <div style={{ color: '#ffffff', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      <div style={{ color: '#1a1a1a', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                         {message.content}
                       </div>
                     </div>

@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@toast-ui/react-editor": "^3.2.3",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

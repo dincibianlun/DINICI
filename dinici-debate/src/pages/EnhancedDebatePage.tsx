@@ -6,6 +6,7 @@ import { useEnhancedDebateFlow } from '../hooks/useEnhancedDebateFlow';
 import { userConfigManager, UserDebateConfig, DebatePhase } from '../services/userConfigService';
 import { handleError, EnhancedConfigValidator } from '../utils/errorHandler';
 import { supabase } from '../lib/supabaseClient';
+import '../styles/input-fix.css';
 
 // 可选模型列表
 const MODEL_OPTIONS = [
@@ -56,6 +57,8 @@ export const EnhancedDebatePage = () => {
   const [judgeModel, setJudgeModel] = useState('openai/gpt-5-chat');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   // 自动滚动到底部
   useEffect(() => {
@@ -164,19 +167,29 @@ export const EnhancedDebatePage = () => {
 
   const handleResetDebate = () => {
     resetDebate();
+    setIsSaved(false);  // 重置保存状态
     MessagePlugin.info('已重置辩论状态');
   };
 
   const handleSaveDebate = async () => {
+    // 如果已经保存过或正在保存中，不再执行
+    if (isSaved || isSaving) {
+      return;
+    }
+    
     try {
+      setIsSaving(true);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         MessagePlugin.error('请先登录');
+        setIsSaving(false);
         return;
       }
 
       if (messages.length === 0) {
         MessagePlugin.error('没有辩论内容可保存');
+        setIsSaving(false);
         return;
       }
 
@@ -192,6 +205,7 @@ export const EnhancedDebatePage = () => {
 
       // 简化messages数据，确保可序列化
       const simplifiedMessages = messages.map(msg => ({
+        role: msg.role,
         speaker: msg.speaker,
         content: msg.content,
         phase: msg.phase,
@@ -203,19 +217,17 @@ export const EnhancedDebatePage = () => {
         .from('debates')
         .insert([{
           user_id: user.id,
-          topic: debateTopic,
-          positive_model: positiveModel,
-          negative_model: negativeModel,
-          judge_model: judgeModel,
-          content: simplifiedMessages,
-          conversation: simplifiedMessages, // 添加 conversation 字段
-          is_public: false,
-          model_config: {
-            positive: positiveModel,
-            negative: negativeModel,
-            judge: judgeModel,
-            voiceEnabled: voiceEnabled
-          }
+          topic: debateTopic || '人工智能的发展对人类社会利大于弊',  // 确保topic不为空
+          positive_model: positiveModel || 'openai/gpt-5-chat',  // 确保model不为空
+          negative_model: negativeModel || 'anthropic/claude-3-haiku',
+          judge_model: judgeModel || 'openai/gpt-5-chat',
+          content: simplifiedMessages,  // 内容必须是JSONB类型
+          conversation: simplifiedMessages, // 适配新的数据结构要求
+          is_public: false,  // 默认不公开
+          tags: [],  // 默认空标签数组
+          views: 0,  // 初始化统计数据
+          likes: 0,
+          shares: 0
         }])
         .select();
 
@@ -232,14 +244,56 @@ export const EnhancedDebatePage = () => {
           errorMessage = `保存失败: ${error.message}`;
         }
         
-        MessagePlugin.error(errorMessage);
+        MessagePlugin.error({
+          content: errorMessage,
+          duration: 6000,
+          closeBtn: true,
+          style: { 
+            color: '#000000', 
+            background: '#ffffff',
+            border: '1px solid #e34d59',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+          }
+        });
+        setIsSaving(false);
         return;
       }
       
-      MessagePlugin.success('辩论记录已保存');
+      // 显示成功消息
+      const saveSuccessElement = document.getElementById('saveSuccessMessage');
+      if (saveSuccessElement) {
+        saveSuccessElement.innerHTML = '<div style="margin-top: 1rem; padding: 0.75rem; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 8px; font-size: 1rem;">辩论记录已保存</div>';
+      } else {
+        // 使用默认提示
+        MessagePlugin.success({
+          content: '辩论记录已保存',
+          duration: 3000,
+          style: { 
+            color: '#000000', 
+            background: '#ffffff',
+            border: '1px solid #00a870',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+          }
+        });
+      }
+      
+      // 标记为已保存，防止重复保存
+      setIsSaved(true);
+      setIsSaving(false);
     } catch (error) {
       console.error('保存辩论记录失败:', error);
-      MessagePlugin.error('保存失败，请稍后重试');
+      MessagePlugin.error({
+        content: '保存失败，请稍后重试',
+        duration: 5000,
+        closeBtn: true,
+        style: { 
+          color: '#000000', 
+          background: '#ffffff',
+          border: '1px solid #e34d59',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+        }
+      });
+      setIsSaving(false);
     }
   };
 
@@ -250,34 +304,21 @@ export const EnhancedDebatePage = () => {
 
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#ffffff' }}>
-      <Header />
-      <Breadcrumb />
-      
-      <div style={{ padding: '1rem', position: 'relative' }}>
-        {/* 网格背景 */}
-        <div 
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `
-              linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)
-            `,
-            backgroundSize: '60px 60px'
-          }}
-        />
+      <div style={{ minHeight: '100vh', background: '#f8f9fa', color: '#333333', fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif', fontSize: '1.1rem' }}>
+        <Header />
+        <Breadcrumb />
+        
+        <div style={{ padding: '1rem' }}>
 
         {/* 错误显示 */}
         {error && (
           <Card style={{ 
             marginBottom: '1.5rem',
-            background: 'rgba(255, 0, 0, 0.1)',
-            border: '1px solid rgba(255, 0, 0, 0.3)',
-            position: 'relative',
-            zIndex: 10
+            background: '#fff',
+            border: '1px solid #e9ecef',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
           }}>
-            <div style={{ color: '#ff6b6b' }}>
+            <div style={{ color: '#dc3545' }}>
               ❌ {error}
             </div>
           </Card>
@@ -287,14 +328,13 @@ export const EnhancedDebatePage = () => {
         {messages.length > 0 && (
           <Card style={{ 
             marginBottom: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(0, 255, 255, 0.1)',
-            position: 'relative',
-            zIndex: 10
+            background: '#fff',
+            border: '1px solid #e9ecef',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
-                <h3 style={{ margin: 0, color: '#00ffff' }}>
+                <h3 style={{ margin: 0, color: '#495057' }}>
                   {PHASE_NAMES[currentPhase]}
                 </h3>
                 {currentSpeaker && (
@@ -304,10 +344,10 @@ export const EnhancedDebatePage = () => {
                 )}
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.875rem', color: '#888' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
                   总进度: {Math.round(totalProgress * 100)}%
                 </div>
-                <div style={{ fontSize: '0.875rem', color: '#888' }}>阶段进度: {Math.round(phaseProgress * 100)}%</div>
+                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>阶段进度: {Math.round(phaseProgress * 100)}%</div>
               </div>
             </div>
             
@@ -338,167 +378,144 @@ export const EnhancedDebatePage = () => {
           </Card>
         )}
 
-        {/* 辩论设置区 */}
+        {/* 辩论命题设置 */}
         {currentPhase === DebatePhase.PREPARING && (
-          <Card style={{
+          <Card style={{ 
             marginBottom: '1.5rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(0, 255, 255, 0.1)',
-            position: 'relative',
-            zIndex: 10
+            background: '#fff',
+            border: '1px solid #e9ecef',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)' 
           }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 500, marginBottom: '1rem', color: '#00ffff' }}>
-              辩论设置
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#495057' }}>
+              辩论命题
             </h3>
             
             {isConfigLoading ? (
               <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <div style={{ color: '#888' }}>正在加载用户配置...</div>
+                <div style={{ color: '#6c757d' }}>正在加载用户配置...</div>
               </div>
             ) : !userConfig ? (
               <div style={{ 
                 padding: '2rem', 
                 textAlign: 'center',
-                background: 'rgba(255, 255, 0, 0.1)',
-                border: '1px solid rgba(255, 255, 0, 0.3)',
+                background: '#fff3cd',
+                border: '1px solid #ffeaa7',
                 borderRadius: '8px'
               }}>
-                <div style={{ color: '#ffdd44', marginBottom: '1rem' }}>
+                <div style={{ color: '#856404', marginBottom: '1rem' }}>
                   配置不完整
                 </div>
-                <div style={{ color: '#cccccc', marginBottom: '1rem' }}>
+                <div style={{ color: '#6c757d', marginBottom: '1rem' }}>
                   需要配置OpenRouter API密钥和TTS参数才能开始辩论
                 </div>
                 <Button 
                   onClick={() => window.location.href = '/settings'}
-                  theme="primary"
+                  theme="default"
+                  style={{
+                    background: '#ffffff !important',
+                    border: '1px solid #e9ecef !important',
+                    color: '#000000 !important',
+                    borderRadius: '6px',
+                    padding: '0.75rem 1.5rem',
+                    fontSize: '1rem',
+                    minWidth: '120px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: 'none',
+                    zIndex: 1,
+                    backgroundColor: '#ffffff !important',
+                    backgroundImage: 'none !important'
+                  }}
                 >
                   前往设置
                 </Button>
+                <Button 
+                  onClick={() => window.location.href = '/overview'}
+                  theme="default"
+                  style={{
+                    background: '#ffffff !important',
+                    border: '1px solid #e9ecef !important',
+                    color: '#000000 !important',
+                    borderRadius: '6px',
+                    padding: '0.75rem 1.5rem',
+                    fontSize: '1rem',
+                    minWidth: '120px',
+                    transition: 'all 0.2s ease',
+                    marginLeft: '1rem',
+                    boxShadow: 'none',
+                    zIndex: 1,
+                    backgroundColor: '#ffffff !important',
+                    backgroundImage: 'none !important'
+                  }}
+                >
+                  如何获取
+                </Button>
               </div>
             ) : (
-              <>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: '#cccccc' }}>
-                    辩论题目
-                  </label>
-                  <input
-                    type="text"
-                    value={debateTopic}
-                    onChange={(e) => setDebateTopic(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(0, 255, 255, 0.3)',
-                      borderRadius: '4px',
-                      color: '#ffffff',
-                      fontSize: '0.875rem'
-                    }}
-                    placeholder="请输入辩论题目"
-                  />
-                </div>
-                
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#cccccc' }}>
-                    <input
-                      type="checkbox"
-                      checked={voiceEnabled}
-                      onChange={(e) => setVoiceEnabled(e.target.checked)}
-                      style={{ accentColor: '#00ffff' }}
-                    />
-                    启用语音合成
-                  </label>
-                </div>
-                
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#cccccc' }}>
-                    <input
-                      type="checkbox"
-                      checked={autoPlayEnabled}
-                      onChange={(e) => {
-                        setAutoPlayEnabled(e.target.checked);
-                        // 同步更新音频播放服务的设置
-                        import('../services/audioPlayerService').then(({ audioPlayer }) => {
-                          audioPlayer.setAutoPlay(e.target.checked);
-                        });
-                      }}
-                      style={{ accentColor: '#00ffff' }}
-                      disabled={!voiceEnabled}
-                    />
-                    自动播放语音
-                  </label>
-                  {!voiceEnabled && (
-                    <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem', marginLeft: '1.5rem' }}>
-                      需要先启用语音合成
+              <>                <div style={{ marginBottom: '1.5rem' }}>                  <input                    type="text"                    value={debateTopic}                    onChange={(e) => setDebateTopic(e.target.value)}                    style={{                      width: '100%',                      padding: '1rem',                      background: '#fff',                      border: '1px solid #ced4da',                      borderRadius: '6px',                      color: '#000000 !important',                      fontSize: '1.2rem'                    }}                    placeholder="请输入辩论题目"                    className="tdesign-input-fix"                  />                </div>                
+                <h4 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#495057' }}>                  AI模型配置                </h4>                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+                  <div>
+                      <label style={{ display: 'block', fontSize: '1.3rem', marginBottom: '0.75rem', color: '#28a745' }}>
+                        正方模型
+                      </label>
+                      <Select
+                        value={positiveModel}
+                        onChange={(val) => setPositiveModel(val as string)}
+                        options={MODEL_OPTIONS}
+                        style={{ 
+                          width: '100%',
+                          fontSize: '1.1rem',
+                          color: '#333333',
+                          background: '#f8f9fa',
+                          height: '2.5rem',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '8px'
+                        }}
+                        className="tdesign-input-fix"
+                        popupProps={{                          placement: 'bottom',                          overlayStyle: {                            background: '#fff',                            border: '1px solid #e9ecef',                            borderRadius: '8px',                            fontSize: '1.1rem',                            color: '#333333'                          }                        }}
+                      />
                     </div>
-                  )}
-                </div>
-                
-                <h4 style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '1rem', color: '#00ffff' }}>
-                  AI模型配置
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: '#00ff88' }}>
-                      正方模型
-                    </label>
-                    <Select
-                      value={positiveModel}
-                      onChange={(val) => setPositiveModel(val as string)}
-                      options={MODEL_OPTIONS}
-                      style={{ width: '100%' }}
-                      popupProps={{
-                        placement: 'bottom',
-                        overlayStyle: {
-                          background: 'rgba(10, 10, 10, 0.95)',
-                          border: '1px solid rgba(0, 255, 255, 0.3)',
-                          borderRadius: '8px',
-                          backdropFilter: 'blur(10px)'
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: '#ff6b6b' }}>
-                      反方模型
-                    </label>
-                    <Select
-                      value={negativeModel}
-                      onChange={(val) => setNegativeModel(val as string)}
-                      options={MODEL_OPTIONS}
-                      style={{ width: '100%' }}
-                      popupProps={{
-                        placement: 'bottom',
-                        overlayStyle: {
-                          background: 'rgba(10, 10, 10, 0.95)',
-                          border: '1px solid rgba(255, 107, 107, 0.3)',
-                          borderRadius: '8px',
-                          backdropFilter: 'blur(10px)'
-                        }
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.5rem', color: '#ffd93d' }}>
-                      裁判模型
-                    </label>
-                    <Select
-                      value={judgeModel}
-                      onChange={(val) => setJudgeModel(val as string)}
-                      options={MODEL_OPTIONS}
-                      style={{ width: '100%' }}
-                      popupProps={{
-                        placement: 'bottom',
-                        overlayStyle: {
-                          background: 'rgba(10, 10, 10, 0.95)',
-                          border: '1px solid rgba(255, 217, 61, 0.3)',
-                          borderRadius: '8px',
-                          backdropFilter: 'blur(10px)'
-                        }
-                      }}
-                    />
-                  </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '1.3rem', marginBottom: '0.75rem', color: '#dc3545' }}>
+                        反方模型
+                      </label>
+                      <Select
+                        value={negativeModel}
+                        onChange={(val) => setNegativeModel(val as string)}
+                        options={MODEL_OPTIONS}
+                        style={{ 
+                          width: '100%',
+                          fontSize: '1.1rem',
+                          color: '#333333',
+                          background: '#f8f9fa',
+                          height: '2.5rem',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '8px'
+                        }}
+                        className="tdesign-input-fix"
+                        popupProps={{                          placement: 'bottom',                          overlayStyle: {                            background: '#fff',                            border: '1px solid #e9ecef',                            borderRadius: '8px',                            fontSize: '1.1rem',                            color: '#333333'                          }                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '1.3rem', marginBottom: '0.75rem', color: '#ffc107' }}>
+                        裁判模型
+                      </label>
+                      <Select
+                        value={judgeModel}
+                        onChange={(val) => setJudgeModel(val as string)}
+                        options={MODEL_OPTIONS}
+                        style={{ 
+                          width: '100%',
+                          fontSize: '1.1rem',
+                          color: '#333333',
+                          background: '#f8f9fa',
+                          height: '2.5rem',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '8px'
+                        }}
+                        className="tdesign-input-fix"
+                        popupProps={{                          placement: 'bottom',                          overlayStyle: {                            background: '#fff',                            border: '1px solid #e9ecef',                            borderRadius: '8px',                            fontSize: '1.1rem',                            color: '#333333'                          }                        }}
+                      />
+                    </div>
                 </div>
                 
                 <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
@@ -506,32 +523,49 @@ export const EnhancedDebatePage = () => {
                     onClick={handleStartDebate}
                     loading={isLoading}
                     disabled={isLoading}
+                    theme="default"
+                    size="large"
+                    shape="round"
                     style={{
-                      width: '100%',
-                      height: '3rem',
-                      background: 'linear-gradient(45deg, #00ffff, #8b5cf6)',
-                      border: 'none',
-                      color: 'white',
-                      fontSize: '1rem',
-                      borderRadius: '8px',
-                      fontWeight: '500'
-                    }}
+                        width: '200px',
+                        margin: '0 auto',
+                        background: '#f8f9fa',
+                        color: '#495057',
+                        fontSize: '0.9rem',
+                        fontWeight: '500'
+                      }}
                   >
                     {isLoading ? 'AI正在思考...' : '开始辩论'}
                   </Button>
                 </div>
                 
-                <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(0, 255, 255, 0.05)', borderRadius: '8px' }}>
-                  <h5 style={{ margin: 0, marginBottom: '0.5rem', color: '#00ffff' }}>辩论功能</h5>
-                  <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#cccccc', fontSize: '0.875rem' }}>
-                    <li>7个专业辩论阶段：开场→立论→质询→驳论→自由辩论→总结→评议</li>
-                    <li>智能字数控制：每个阶段都有合理的字数要求</li>
-                    <li>动态交替发言：质询和自由辩论支持多轮交互</li>
-                    <li>高质量语音合成：基于火山引擎TTS技术</li>
-                    <li>流式内容生成：支持实时查看AI思考过程</li>
-                    <li>自动语音播放：音频生成完成后自动播放，按顺序排队</li>
-                    <li>详细辩论记录：完整保存所有发言内容</li>
-                  </ul>
+                <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+                  {/* 左侧卡片：辩论功能 */}
+                  <div style={{ flex: 1, padding: '1rem', background: '#fff', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                    <h5 style={{ margin: 0, marginBottom: '0.5rem', color: '#495057', fontSize: '1.1rem', fontWeight: 'bold' }}>辩论功能</h5>
+                    <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#495057', fontSize: '1rem' }}>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>7个专业辩论阶段：开场→立论→质询→驳论→自由辩论→总结→评议</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>智能字数控制：每个阶段都有合理的字数要求</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>动态交替发言：质询和自由辩论支持多轮交互</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>高质量语音合成：基于火山引擎TTS技术</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>流式内容生成：支持实时查看AI思考过程</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>自动语音播放：音频生成完成后自动播放，按顺序排队</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>详细辩论记录：完整保存所有发言内容</li>
+                    </ul>
+                  </div>
+                  
+                  {/* 右侧卡片：使用须知 */}
+                  <div style={{ flex: 1, padding: '1rem', background: '#fff', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+                    <h5 style={{ margin: 0, marginBottom: '0.5rem', color: '#495057', fontSize: '1.1rem', fontWeight: 'bold' }}>使用须知</h5>
+                    <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#495057', fontSize: '1rem' }}>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>内容由AI生成，请仔细甄别信息准确性</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>辩论观点不代表平台立场，仅供参考</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>不同AI模型性能各异，可能产生不同质量的内容</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>生成内容可能存在偏见或不准确之处</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>请勿使用平台生成违反法律法规的内容</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>保存功能需登录，请妥善保管个人账号</li>
+                    </ul>
+                  </div>
                 </div>
               </>
             )}
@@ -559,29 +593,28 @@ export const EnhancedDebatePage = () => {
                     style={{
                       maxWidth: '70%',
                       padding: '1rem 1.5rem',
-                      borderRadius: isPositive ? '20px 20px 20px 5px' : 
-                                   isNegative ? '20px 20px 5px 20px' : '20px',
-                      background: isPositive ? 'rgba(0, 255, 136, 0.1)' :
-                                  isNegative ? 'rgba(255, 107, 107, 0.1)' :
-                                  isHost ? 'rgba(255, 217, 61, 0.1)' :
-                                  'rgba(0, 255, 255, 0.1)',
-                      border: `1px solid ${
-                        isPositive ? 'rgba(0, 255, 136, 0.3)' :
-                        isNegative ? 'rgba(255, 107, 107, 0.3)' :
-                        isHost ? 'rgba(255, 217, 61, 0.3)' :
-                        'rgba(0, 255, 255, 0.3)'
-                      }`,
-                      position: 'relative'
+                      borderRadius: isPositive ? '24px 24px 24px 8px' : 
+                                   isNegative ? '24px 24px 8px 24px' : '24px',
+                      background: isPositive ? '#f8f9fa' :
+                                  isNegative ? '#f8f9fa' :
+                                  isHost ? '#f8f9fa' :
+                                  '#f8f9fa',
+                      border: `1px solid ${isPositive ? '#28a745' :
+                                       isNegative ? '#dc3545' :
+                                       isHost ? '#ffc107' :
+                                       '#6c757d'}`,
+                      position: 'relative',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                     }}
                   >
                     {/* 发言者标签 */}
                     <div style={{
-                      fontSize: '0.75rem',
-                      color: isPositive ? '#00ff88' :
-                             isNegative ? '#ff6b6b' :
-                             isHost ? '#ffd93d' :
-                             '#00ffff',
-                      fontWeight: 500,
+                      fontSize: '0.875rem',
+                      color: isPositive ? '#28a745' :
+                             isNegative ? '#dc3545' :
+                             isHost ? '#ffc107' :
+                             '#6c757d',
+                      fontWeight: 600,
                       marginBottom: '0.5rem',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -601,9 +634,9 @@ export const EnhancedDebatePage = () => {
                     
                     {/* 内容 */}
                     <div style={{
-                      color: '#ffffff',
+                      color: '#333333',
                       lineHeight: 1.6,
-                      fontSize: '0.875rem',
+                      fontSize: '1rem',
                       whiteSpace: 'pre-wrap'
                     }}>
                       <span className={isActiveSpeaker(index) ? 'typing-indicator' : ''}>
@@ -643,9 +676,9 @@ export const EnhancedDebatePage = () => {
                               }
                             }}
                             style={{
-                              background: 'rgba(0, 255, 255, 0.1)',
-                              border: '1px solid rgba(0, 255, 255, 0.3)',
-                              color: '#00ffff'
+                              background: '#f8f9fa',
+                              border: '1px solid #6c757d',
+                              color: '#6c757d'
                             }}
                           >
                             🔊 播放语音
@@ -681,36 +714,50 @@ export const EnhancedDebatePage = () => {
             {currentPhase === DebatePhase.COMPLETED && (
               <Card style={{ 
                 padding: '1.5rem',
-                background: 'rgba(0, 255, 255, 0.05)',
-                border: '1px solid rgba(0, 255, 255, 0.2)',
-                textAlign: 'center'
+                background: '#fff',
+                border: '1px solid #e9ecef',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
               }}>
-                <h3 style={{ color: '#00ffff', marginBottom: '1rem' }}>辩论完成！</h3>
-                <div style={{ marginBottom: '1rem', color: '#cccccc' }}>
+                <h3 style={{ color: '#28a745', marginBottom: '1rem', fontSize: '1.5rem', fontWeight: 'bold' }}>辩论完成！</h3>
+                <div style={{ marginBottom: '1rem', color: '#495057' }}>
                   本次辩论共进行了 {messages.length} 轮发言，涵盖了完整的7个辩论阶段。
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <Button 
                     onClick={handleSaveDebate}
+                    loading={isSaving}
+                    disabled={isSaved || isSaving}
                     style={{
-                      background: '#00ffff',
-                      border: 'none',
-                      color: '#000000'
+                      background: isSaved ? '#e9ecef' : '#f8f9fa',
+                      border: '1px solid #dee2e6',
+                      color: isSaved ? '#adb5bd' : '#495057',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1.5rem',
+                      fontSize: '1.1rem',
+                      height: '2.5rem',
+                      cursor: isSaved ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    保存记录
+                    {isSaving ? '正在保存...' : isSaved ? '已保存' : '保存记录'}
                   </Button>
                   <Button 
                     onClick={handleResetDebate}
                     style={{
-                      background: '#6c757d',
-                      border: 'none',
-                      color: '#ffffff'
+                      background: '#f8f9fa',
+                      border: '1px solid #dee2e6',
+                      color: '#495057',
+                      borderRadius: '8px',
+                      padding: '0.5rem 1.5rem',
+                      fontSize: '1.1rem',
+                      height: '2.5rem'
                     }}
                   >
                     新的辩论
                   </Button>
                 </div>
+                <div id="saveSuccessMessage"></div>
               </Card>
             )}
             

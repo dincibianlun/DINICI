@@ -31,12 +31,16 @@ export const signUp = async (
     
     // 如果注册成功，同时在users表中创建用户记录
     if (result.data.user && !result.error) {
+      // 检查是否为管理员邮箱
+      const adminEmails = ['admin@dinci.com', 'admin@example.com'];
+      const isAdminEmail = result.data.user.email && adminEmails.includes(result.data.user.email);
+      
       await supabase
         .from('users')
         .upsert({
           id: result.data.user.id,
           email: result.data.user.email,
-          role: 'user',
+          role: isAdminEmail ? 'admin' : 'user',
           created_at: new Date().toISOString(),
           last_active_at: new Date().toISOString()
         });
@@ -76,13 +80,18 @@ export const signIn = async (
       password
     });
     
-    // 如果登录成功，更新最后活跃时间
+    // 如果登录成功，更新最后活跃时间和检查管理员角色
     if (result.data.user && !result.error) {
+      // 检查是否为管理员邮箱
+      const adminEmails = ['admin@dinci.com', 'admin@example.com'];
+      const isAdminEmail = result.data.user.email && adminEmails.includes(result.data.user.email);
+      
       await supabase
         .from('users')
         .upsert({
           id: result.data.user.id,
           email: result.data.user.email,
+          role: isAdminEmail ? 'admin' : 'user',
           last_active_at: new Date().toISOString()
         });
     }

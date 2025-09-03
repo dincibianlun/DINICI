@@ -19,6 +19,40 @@
   min-height: 100vh;
 }
 
+/* 用户下拉菜单样式覆盖 */
+.user-menu-popup {
+  background: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 4px !important;
+  overflow: hidden;
+  min-width: 120px;
+  width: auto;
+}
+
+.user-menu-popup .t-dropdown__menu-item {
+  color: #333333 !important;
+  background: #ffffff !important;
+  transition: all 0.2s ease;
+  padding: 1rem 1.25rem;
+  line-height: 1.8;
+  font-size: 0.875rem;
+}
+
+.user-menu-popup .t-dropdown__menu-item:hover {
+  background: #f8f9fa !important;
+  color: #1a1a1a !important;
+}
+
+/* 搜索框文字颜色确保 */
+.t-input {
+  color: #333333 !important;
+}
+
+.t-input::placeholder {
+  color: #999999 !important;
+}
+
 /* 主内容区域 */
 .main-content {
   flex: 1;
@@ -193,29 +227,33 @@
   color: #00ffff !important;
 }
 
-/* Header和Breadcrumb组件样式 */
+/* 用户菜单下拉框样式 */
 .user-menu-popup {
   z-index: 9999 !important;
-  border: 1px solid rgba(0, 255, 255, 0.3) !important;
-  background: rgba(10, 10, 10, 0.95) !important;
-  backdrop-filter: blur(10px) !important;
+  border: 1px solid #e9ecef !important;
+  background: #ffffff !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
 .user-menu-popup .t-dropdown-menu {
-  background: rgba(10, 10, 10, 0.95) !important;
-  border: none !important;
+  background: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 8px !important;
 }
 
-.user-menu-popup .t-dropdown-item {
-  color: #ffffff !important;
-  background: transparent !important;
+.user-menu-popup .t-dropdown-menu .t-dropdown-item {
+  color: #495057 !important;
+  background: #ffffff !important;
   padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  border-radius: 4px !important;
   transition: all 0.2s ease !important;
 }
 
-.user-menu-popup .t-dropdown-item:hover {
-  background: rgba(0, 255, 255, 0.1) !important;
-  color: #00ffff !important;
+.user-menu-popup .t-dropdown-menu .t-dropdown-item:hover {
+  background: #f8f9fa !important;
+  color: #000000 !important;
 }
 
 /* ProfilePage表格暗色主题样式 */

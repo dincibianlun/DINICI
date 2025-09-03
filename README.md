@@ -18,15 +18,12 @@ DINICI/
 ├── dinici-debate/          # 主应用 - 辩论平台
 │   ├── src/
 │   │   ├── components/     # 组件
-│   │   ├── pages/         # 页面
+│   │   ├── pages/         # 页面 (包含管理后台)
 │   │   ├── services/      # 服务层
 │   │   ├── hooks/         # 自定义Hook
 │   │   ├── context/       # 上下文
 │   │   └── utils/         # 工具函数
 │   ├── supabase/         # 数据库迁移
-│   └── package.json
-├── dinici-admin/          # 管理后台
-│   ├── src/
 │   └── package.json
 └── README.md
 ```
@@ -100,8 +97,6 @@ TTS_ENABLE_LATEX_TN=true
 
 ### 5. 安装依赖并启动
 
-#### 启动主应用 (辩论平台)
-
 ```bash
 cd dinici-debate
 npm install
@@ -110,15 +105,7 @@ npm run dev
 
 应用将在 http://localhost:5173 启动
 
-#### 启动管理后台
-
-```bash
-cd dinici-admin
-npm install
-npm run dev
-```
-
-管理后台将在 http://localhost:5174 启动
+**管理员功能**: 管理员用户登录后可以通过导航菜单访问管理后台功能
 
 ### 6. 数据库设置
 

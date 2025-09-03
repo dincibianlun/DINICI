@@ -1,18 +1,54 @@
+/* 案例卡片基础样式 */
 .hover-card {
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #e9ecef;
 }
 
+/* 卡片悬停效果 */
 .hover-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #007bff !important;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #1a1a1a !important;
 }
 
+/* 卡片标题悬停效果 */
 .hover-card:hover h3 {
-  color: #007bff !important;
+  color: #1a1a1a !important;
+  transition: color 0.3s ease;
 }
 
+/* 查看按钮悬停效果 */
 .hover-card:hover .view-button {
-  background: #007bff !important;
+  background: #1a1a1a !important;
   color: white !important;
+  transform: translateX(4px);
+  transition: all 0.3s ease;
+}
+
+/* 查看按钮基础样式增强 */
+.view-button {
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 标签样式优化 */
+.hover-card .t-tag {
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover .t-tag {
+  transform: scale(1.05);
+}
+
+/* 案例摘要文字优雅过渡 */
+.hover-card p {
+  transition: color 0.3s ease;
+}
+
+.hover-card:hover p {
+  color: #333333 !important;
 }

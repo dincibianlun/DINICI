@@ -1,0 +1,160 @@
+/* 全局输入框文本颜色修复 */
+.tdesign-input-fix .t-input__inner,
+.tdesign-input-fix input,
+.tdesign-input-fix textarea,
+.tdesign-input-fix select,
+.tdesign-input-fix .t-select-input__wrap,
+.tdesign-input-fix .t-input__wrap,
+input.tdesign-input-fix,
+.tdesign-input-fix,
+input[type="text"],
+textarea,
+.t-input,
+.t-input__inner {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* 编辑器文本颜色修复 */
+.toastui-editor-contents p,
+.toastui-editor-contents h1,
+.toastui-editor-contents h2,
+.toastui-editor-contents h3,
+.toastui-editor-contents h4,
+.toastui-editor-contents h5,
+.toastui-editor-contents h6,
+.toastui-editor-contents ul,
+.toastui-editor-contents ol,
+.toastui-editor-contents li,
+.toastui-editor-contents blockquote,
+.toastui-editor-contents pre,
+.toastui-editor-contents code {
+  color: #333333 !important;
+}
+
+/* 确保所有表单元素文本颜色正确 */
+.t-form .t-input__inner,
+.t-form .t-textarea__inner,
+.t-form .t-select-input,
+.t-form .t-select-option,
+.t-tag,
+input[type="text"].t-input__inner,
+.t-input__inner,
+.t-input input {
+  color: #000000 !important;
+}
+
+/* Select 下拉选项文本颜色修复 */
+.t-select-option,
+.t-option,
+.t-select-option__name,
+.t-select-option__content,
+.t-option__content,
+.t-select-option-content,
+.t-popup__content .t-select-option,
+.t-popup .t-select-option,
+.t-select-dropdown .t-select-option,
+.t-select-dropdown__item,
+.t-is-selected,
+.t-select__right-icon,
+.t-select-dropdown,
+.t-select-dropdown .t-select-option,
+.t-popup .t-popup__content,
+.t-popup .t-popup__body {
+  color: #000000 !important;
+}
+
+/* 悬停和选中状态保持文字可见 */
+.t-select-option.t-is-hover,
+.t-select-option.t-is-selected,
+.t-select-option:hover,
+.t-option:hover,
+.t-option.t-is-selected {
+  color: #000000 !important;
+  background-color: #f0f0f0 !important;
+}
+
+/* 全局输入控件文本颜色强制修复 */
+input, 
+input[type="text"], 
+textarea, 
+select, 
+.t-input, 
+.t-input__inner, 
+.t-textarea, 
+.t-textarea__inner,
+.t-select-input,
+.t-select-option__name,
+.t-select-option__content,
+.t-select-input__wrap,
+.t-select-input input,
+.t-select__right-icon {
+  color: #000000 !important;
+}
+
+/* 确保placeholder颜色不会太浅 */
+::placeholder {
+  color: #999999 !important;
+  opacity: 1 !important;
+}
+
+/* 修复TDesign Select组件特定元素 */
+.t-select .t-input__inner,
+.t-select-input,
+.t-select-placeholder,
+.t-select-input__wrap {
+  color: #000000 !important;
+}
+
+/* 修复所有可能的下拉菜单文本 */
+.t-popup, 
+.t-popup *, 
+.t-select-dropdown, 
+.t-select-dropdown *,
+.t-select *, 
+.t-menu *, 
+.t-dropdown * {
+  color: #000000 !important;
+}
+
+/* 修复TDesign消息提示组件 */
+.t-message,
+.t-message__content,
+.t-message__title,
+.t-message__text,
+.t-message__close,
+.t-message--info,
+.t-message--success,
+.t-message--warning,
+.t-message--error,
+.t-message--loading,
+.t-message--question {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 不同类型消息的颜色区分 */
+.t-message--info .t-message__icon {
+  color: #0052d9 !important;
+}
+
+.t-message--success .t-message__icon {
+  color: #00a870 !important;
+}
+
+.t-message--warning .t-message__icon {
+  color: #ed7b2f !important;
+}
+
+.t-message--error .t-message__icon {
+  color: #e34d59 !important;
+}
+
+/* 确保错误消息清晰可见 */
+.t-message--error .t-message__content,
+.t-message--error .t-message__text {
+  color: #e34d59 !important;
+  font-weight: 500 !important;
+}

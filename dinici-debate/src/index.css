@@ -211,6 +211,53 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2) !important;
 }
 
+/* 确保输入框文本是白色 - 加强样式 */
+.t-input, 
+.t-input input, 
+.t-input textarea, 
+.t-textarea, 
+.t-textarea textarea {
+  color: #ffffff !important;
+  caret-color: #00ffff !important;
+}
+
+/* 所有表单相关输入组件文本颜色 */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+textarea,
+select {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(0, 255, 255, 0.3) !important;
+}
+
+/* 密码框等特殊输入框 */
+.t-input--password {
+  color: #ffffff !important;
+}
+
+/* 用户中心页面特定按钮样式 - 保持与全局样式一致 */
+#profile-start-debate-btn-1 {
+  background: #ffffff !important;
+  border: 2px solid #e9ecef !important;
+  color: #000000 !important;
+  padding: 0.75rem 1.5rem !important;
+  font-size: 1rem !important;
+  min-width: 120px !important;
+}
+
+#profile-start-debate-btn-1:hover {
+  background: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
 .t-input::placeholder {
   color: #888888 !important;
 }
@@ -219,18 +266,34 @@ body {
   border-radius: 0.5rem !important;
   font-weight: 600 !important;
   transition: all 0.3s ease !important;
+  padding: 0.75rem 1.5rem !important;
+  font-size: 1rem !important;
+  border-width: 2px !important;
+  min-width: 120px !important;
+  background: #ffffff !important;
+  border-color: #e9ecef !important;
+  color: #000000 !important;
 }
 
+.t-button:hover {
+  background: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 主要按钮样式 - 简化设计，去掉渐变和复杂动画 */
 .t-button--theme-primary {
-  background: linear-gradient(45deg, #00ffff, #ff00ff) !important;
-  border: none !important;
+  background: #007bff !important;
+  border-color: #007bff !important;
   color: white !important;
 }
 
 .t-button--theme-primary:hover {
-  background: linear-gradient(45deg, #00cccc, #cc00cc) !important;
-  transform: scale(1.05) !important;
-  box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3) !important;
+  background: #0056b3 !important;
+  border-color: #0056b3 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3) !important;
 }
 
 .t-select {
@@ -270,6 +333,29 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #7c3aed;
+}
+
+/* MessagePlugin错误消息样式覆盖 */
+.t-message {
+  z-index: 9999 !important;
+}
+
+/* 错误提示样式 - 红色文本 */
+.t-message--theme-error,
+.t-message--theme-warning {
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+.t-message--theme-error .t-message__content,
+.t-message--theme-warning .t-message__content {
+  color: #ffffff !important;
+}
+
+.t-message--theme-error .t-message__icon,
+.t-message--theme-warning .t-message__icon {
+  color: #ffffff !important;
 }
 
 /* 响应式动画 */

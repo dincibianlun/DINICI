@@ -60,7 +60,7 @@ export const Breadcrumb = ({ items }: BreadcrumbProps) => {
       {breadcrumbItems.map((item, index) => (
         <div key={item.path} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {index === breadcrumbItems.length - 1 ? (
-            <span style={{ color: '#00ffff', fontWeight: '500' }}>{item.label}</span>
+            <span style={{ color: '#888888', fontWeight: '500' }}>{item.label}</span>
           ) : (
             <>
               <Link 
@@ -70,7 +70,7 @@ export const Breadcrumb = ({ items }: BreadcrumbProps) => {
                   textDecoration: 'none',
                   transition: 'color 0.2s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#00ffff'}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#1a1a1a'}
                 onMouseLeave={(e) => e.currentTarget.style.color = '#888888'}
               >
                 {item.label}

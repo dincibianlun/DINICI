@@ -485,6 +485,7 @@ export const DebatePage = () => {
         
         <div ref={messagesEndRef} />
         </div>
+      </main>
       </div>
     </div>
   );

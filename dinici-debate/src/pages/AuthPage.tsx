@@ -251,30 +251,30 @@ export default function AuthPage() {
                 邮箱地址
               </label>
               <Input
-                value={email}
-                onChange={(value) => setEmail(value)}
-                placeholder="请输入邮箱地址"
-                style={{
-                  width: '100%',
-                  height: '3rem',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '4px',
-                  color: '#ffffff',
-                  fontSize: '0.875rem',
-                  padding: '0 1rem',
-                  transition: 'all 0.2s ease',
-                  outline: 'none'
-                }}
-                onFocus={(e: any) => {
-                  e.currentTarget.style.borderColor = '#00ffff';
-                  e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
-                }}
-                onBlur={(e: any) => {
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
+            value={email}
+            onChange={(value) => setEmail(value)}
+            placeholder="请输入邮箱地址"
+            style={{
+              width: '100%',
+              height: '3rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '4px',
+              color: '#ffffff',
+              fontSize: '0.875rem',
+              padding: '0 1rem',
+              transition: 'all 0.2s ease',
+              outline: 'none'
+            }}
+            onFocus={(e: any) => {
+              e.currentTarget.style.borderColor = '#00ffff';
+              e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+            }}
+            onBlur={(e: any) => {
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          />
               {formErrors.email && (
                 <span style={{ color: '#ff6b6b', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
                   {formErrors.email}
@@ -315,7 +315,7 @@ export default function AuthPage() {
                   }}
                   onFocus={(e: any) => {
                     e.currentTarget.style.borderColor = '#00ffff';
-                    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.2)';
                   }}
                   onBlur={(e: any) => {
                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
@@ -377,7 +377,7 @@ export default function AuthPage() {
                   }}
                   onFocus={(e: any) => {
                     e.currentTarget.style.borderColor = '#00ffff';
-                    e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.2)';
                   }}
                   onBlur={(e: any) => {
                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
@@ -400,9 +400,9 @@ export default function AuthPage() {
               style={{
                 width: '100%',
                 height: '3rem',
-                background: 'transparent',
-                border: '1px solid #00ffff',
-                color: '#00ffff',
+                background: '#ffffff',
+                border: '1px solid #e9ecef',
+                color: '#000000',
                 fontSize: '0.875rem',
                 fontWeight: 400,
                 borderRadius: '4px',
@@ -411,11 +411,11 @@ export default function AuthPage() {
                 cursor: 'pointer'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 255, 255, 0.1)';
-                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.2)';
+                e.currentTarget.style.background = '#f8f9fa';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.background = '#ffffff';
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >

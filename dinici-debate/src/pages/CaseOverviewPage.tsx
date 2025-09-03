@@ -3,23 +3,10 @@ import { Link } from 'react-router-dom'
 import { 
   Loading
 } from 'tdesign-react'
-import { 
-  TimeIcon
-} from 'tdesign-icons-react'
-import { supabase } from '../lib/supabaseClient'
+
 import { Header } from '../components/Header'
 import { Breadcrumb } from '../components/Breadcrumb'
-
-type Article = {
-  id: string
-  title: string
-  content: string
-  category: string
-  tags: string[]
-  created_at: string
-  is_published: boolean
-  author_id: string
-}
+import { useArticleStore, Article } from '../store/articleStore'
 
 type ArticleCategory = {
   label: string
@@ -28,50 +15,39 @@ type ArticleCategory = {
 }
 
 export const CaseOverviewPage = () => {
-  const [articles, setArticles] = useState<Article[]>([])
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>([])
-  const [categories, setCategories] = useState<ArticleCategory[]>([])
-  const [selectedCategory, setSelectedCategory] = useState('all')
-  const [loading, setLoading] = useState(true)
+  const articles = useArticleStore((state: any) => state.articles);
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<ArticleCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchArticles()
-  }, [])
+    // 模拟加载延迟
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    filterArticles()
-    updateCategories()
-  }, [articles, selectedCategory])
-
-  const fetchArticles = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('tutorial_articles')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-      
-      if (!error && data) {
-        setArticles(data)
-      }
-    } catch (err) {
-      console.error('加载文章失败:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+    filterArticles();
+    updateCategories();
+  }, [articles, selectedCategory]);
 
   const filterArticles = () => {
+    // 只显示已发布的文章
+    const publishedArticles = articles.filter((article: Article) => article.is_published);
+    
     if (selectedCategory === 'all') {
-      setFilteredArticles(articles)
+      setFilteredArticles(publishedArticles);
     } else {
-      setFilteredArticles(articles.filter(article => article.category === selectedCategory))
+      setFilteredArticles(publishedArticles.filter((article: Article) => article.category === selectedCategory));
     }
-  }
+  };
 
   const updateCategories = () => {
-    const categoryMap = new Map<string, { label: string; count: number }>()
+    const categoryMap = new Map<string, { label: string; count: number }>();
     
     // 定义分类显示信息
     const categoryInfo = {
@@ -79,28 +55,28 @@ export const CaseOverviewPage = () => {
       'announcement': { label: '公告通知' },
       'help': { label: '帮助文档' },
       'faq': { label: '常见问题' }
-    }
+    };
     
     // 统计每个分类的文章数量
-    articles.forEach(article => {
+    articles.forEach((article: Article) => {
       const current = categoryMap.get(article.category) || { 
         label: categoryInfo[article.category as keyof typeof categoryInfo]?.label || article.category,
         count: 0 
-      }
-      categoryMap.set(article.category, { ...current, count: current.count + 1 })
-    })
+      };
+      categoryMap.set(article.category, { ...current, count: current.count + 1 });
+    });
     
     const categoriesArray = Array.from(categoryMap.entries()).map(([value, info]) => ({
       label: info.label,
       value,
       count: info.count
-    }))
+    }));
     
     setCategories([
       { label: '全部文章', value: 'all', count: articles.length },
       ...categoriesArray
-    ])
-  }
+    ]);
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#ffffff', color: '#333333' }}>
