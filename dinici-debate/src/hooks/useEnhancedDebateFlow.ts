@@ -4,7 +4,7 @@ import { callOpenRouterOptimized } from '../services/openRouterService';
 import { synthesizeSpeechWithUserConfig } from '../services/ttsService';
 import { audioCache } from '../services/audioCacheService';
 import { audioPlayer } from '../services/audioPlayerService';
-import { supabase } from '../lib/supabaseClient';
+// supabase not used in this hook
 
 // 辩论角色类型
 export type DebateRole = 'host' | 'positive' | 'negative' | 'judge';
@@ -82,16 +82,33 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     maxRounds: 1,
     wordLimit: 250,
     maxWordLimit: 280,
-    promptTemplate: `你是{side}，请针对"{topic}"进行立论陈述。
-立论要求：
-1. 明确表明{side}立场
-2. 提出2-3个核心论点
-3. 每个论点要有逻辑支撑
-4. 语言有说服力和感染力
-5. 引用1个专业数据或研究结果支持你的论点
-6. 适当引用一句经典名言增强表达力
+  promptTemplate: `作为{side}方辩手，请就"{topic}"这个议题展开你的立论。
 
-控制在{wordLimit}字以内，不要超过280字，论述要有条理性和逻辑性。`
+立论建议：
+1. 准确把握议题本质
+   - 思考这个问题为什么值得讨论
+   - 明确{side}方的基本立场
+   - 揭示问题的复杂性和多面性
+
+2. 根据议题性质选择恰当的论证方式：
+   - 伦理道德类：注重价值判断，讲述有感染力的案例
+   - 社会现象类：结合普遍经验，分析现实影响
+   - 政策制度类：考虑可行性，权衡利弊得失
+   - 科技发展类：关注发展趋势，评估多维影响
+
+3. 论证策略：
+   - 提出2-3个核心论点，确保逻辑连贯
+   - 结合具体事例或场景来支持论点
+   - 恰当使用数据，但不过度依赖
+   - 预判对方可能的质疑并提前回应
+
+4. 表达技巧：
+   - 用生动的比喻和事例增强说服力
+   - 语言要流畅自然，避免过于生硬
+   - 适当引用大众熟知的现象或案例
+   - 展现思维的开放性和包容性
+
+请记住：好的立论不是单纯的说教，而是要引发思考和共鸣。控制在{wordLimit}字以内。`
   },
   [DebatePhase.INQUIRY]: {
     name: '质询阶段',
@@ -100,16 +117,28 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     maxRounds: 2,
     wordLimit: 120,
     maxWordLimit: 280,
-    promptTemplate: `你是{side}，请向对方提出一个尖锐的质询问题。
-质询要求：
-1. 针对对方立论中的薄弱环节
-2. 问题要具体明确，不能泛泛而谈
-3. 力求揭示对方逻辑漏洞
-4. 问题要有一定攻击性但保持理性
-5. 引用一条相关的专业数据或统计结果
-6. 可以适当引用简短文学名句增强表达力
+    promptTemplate: `作为{side}方辩手，请根据对方的论述提出你的质询。
 
-控制在{wordLimit}字以内，不要超过280字，问题要简洁有力。`
+质询建议：
+1. 问题设计：
+   - 如果发现对方论述中的模糊之处，请提出澄清性的问题
+   - 如果看到逻辑上的不足，可以提出挑战性的问题
+   - 如果涉及具体观点，可以请求举例说明
+   - 如果涉及价值判断，可以探讨其判断标准
+
+2. 提问策略：
+   - 善用"如果...那么..."的假设性问题
+   - 结合具体场景或案例来构建问题
+   - 探索对方论述中可能被忽视的角度
+   - 引导对方深入思考问题的复杂性
+
+3. 提问艺术：
+   - 语气要诚恳，展现求知欲而非攻击性
+   - 问题要清晰具体，避免笼统或模棱两可
+   - 适当运用比喻或类比来阐明问题
+   - 给对方合理的思考和回应空间
+
+记住：好的质询不是为了难住对方，而是为了推进讨论深度。控制在{wordLimit}字以内。`
   },
   [DebatePhase.REBUTTAL]: {
     name: '驳论阶段',
@@ -118,16 +147,16 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     maxRounds: 1,
     wordLimit: 230,
     maxWordLimit: 280,
-    promptTemplate: `你是{side}，请对对方的立论进行系统性驳论。
-驳论要求：
-1. 指出对方论证的逻辑缺陷
-2. 提供反驳的事实和证据
-3. 削弱对方论点的说服力
-4. 同时强化自己的立场
-5. 引用1个专业数据或研究结果来反驳对方观点
-6. 适当引用一句名人名言增强表达力
+  promptTemplate: `你是{side}，请对对方的立论进行严谨且具有穿透力的驳论。
+驳论要求（强调证据与方法论审视）：
+1. 指出对方论证中的关键逻辑漏洞、隐含假设或证据空白
+2. 用事实、数据或方法论上的批判来削弱对方论点（提供来源类型或研究维度）
+3. 提出可检验的反例或反事实以展示对方论点的局限
+4. 兼顾反驳与自我强固：在反驳同时强化己方最稳固的论据
+5. 如能，指出对方证据中可能的解释替代或混淆因素
+6. 可适当引用一句名言或研究结论作辅助
 
-控制在{wordLimit}字以内，不要超过280字，驳论要有理有据。`
+控制在{wordLimit}字以内（上限280字），驳论应兼具逻辑性、证据性与策略性。`
   },
   [DebatePhase.FREE_DEBATE]: {
     name: '自由辩论',
@@ -136,16 +165,29 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     maxRounds: 3,
     wordLimit: 180,
     maxWordLimit: 280,
-    promptTemplate: `你是{side}，这是自由辩论环节，请进行激烈但理性的辩论。
-自由辩论要求：
-1. 可以攻击对方新的论点
-2. 可以补强自己的观点
-3. 语言要更加灵活生动
-4. 保持逻辑严密性
-5. 引用一个专业数据或研究结果强化论点
-6. 恰当引用一句简短名言增强表达力
+  promptTemplate: `作为{side}方辩手，这是自由辩论环节。请展现你的智慧与洞察力，使辩论更加生动深入。
 
-控制在{wordLimit}字以内，不要超过280字，要有辩论的激情和张力。`
+要点提示：
+1. 对方如果提出了问题，请先认真回应他们的疑问，再展开你的论述
+2. 根据议题性质灵活选择论证方式：
+   - 涉及伦理道德时，可以讲述真实故事或案例，引发情感共鸣
+   - 讨论社会现象时，结合大众的切身体验和观察
+   - 探讨政策制度时，注重实践中的可行性
+   - 辩论科技发展时，关注对人类社会的实际影响
+
+3. 论证技巧：
+   - 可以用生动的比喻或类比来阐释复杂观点
+   - 适时引用生活中常见的例子
+   - 在需要时才使用数据，不要为了数据而数据
+   - 可以提出假设性的场景来说明问题
+
+4. 互动策略：
+   - 积极回应对方的关切
+   - 寻找潜在的共识点
+   - 用设身处地的思考展示同理心
+   - 保持开放和包容的态度
+
+语言要自然流畅，像是在进行一场富有智慧的对话。控制在{wordLimit}字以内。`
   },
   [DebatePhase.FINAL_SUMMARY]: {
     name: '总结陈词',
@@ -154,16 +196,16 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     maxRounds: 1,
     wordLimit: 250,
     maxWordLimit: 280,
-    promptTemplate: `你是{side}，请进行最终的总结陈词。
-总结陈词要求：
-1. 回顾并强化己方核心论点
-2. 总结对方论证的不足之处
-3. 呼应开篇立论，形成完整闭环
-4. 语言要有感召力和说服力
-5. 引用1个有力的专业数据或研究结论作为支撑
-6. 以一句有力的名言作结，给观众留下深刻印象
+  promptTemplate: `你是{side}，请进行具有总结性与洞察力的最终陈词。
+总结要求：
+1. 简洁回顾并强化己方最关键的1-2条论点与证据链
+2. 指出对方在论证上的主要不足，并说明为何己方解释更具说服力或适用范围更广
+3. 提供1条可供观众检索或验证的证据线索（数据/研究名/期刊）
+4. 呼应开篇，形成完整的论证闭环并提出未来思考方向（可选短句）
+5. 语言要有感召力并保持逻辑收束
+6. 可用一句名言作为结语以增强记忆点
 
-控制在{wordLimit}字以内，不要超过280字，要体现{side}的胜利信心。`
+控制在{wordLimit}字以内（上限280字），兼具感染力与理性说服。`
   },
   [DebatePhase.JUDGE_VERDICT]: {
     name: '裁判评议',
@@ -172,16 +214,16 @@ const DEBATE_PHASES: Record<DebatePhase, PhaseConfig> = {
     maxRounds: 1,
     wordLimit: 250,
     maxWordLimit: 280,
-    promptTemplate: `你是辩论裁判，请对刚才关于"{topic}"的辩论进行专业评议。
+  promptTemplate: `你是辩论裁判，请对刚才关于"{topic}"的辩论做一份专业、结构化且可执行的评议。
 评议要求：
-1. 客观分析双方论证的优缺点
-2. 评价论证逻辑、证据充分性、表达能力
-3. 指出各阶段的亮点和不足
-4. 最终给出合理的胜负判决
-5. 引用1个专业理论或观点来支撑你的评判
-6. 以一句富有哲理的名言作结
+1. 梳理双方主要论点与证据链，评估逻辑一致性与证据质量
+2. 对论证方法、证据来源与论据覆盖范围进行短评
+3. 指出每一阶段的亮点与关键改进点
+4. 给出清晰的胜负判断并说明核心理由（例如证据更可靠或逻辑更严密）
+5. 推荐1-2条可以改进论证的方法或补充的证据方向
+6. 可用一句富有哲理的名言作结
 
-控制在{wordLimit}字以内，不要超过280字，评议要体现专业性和公正性。`
+控制在{wordLimit}字以内（上限280字），评议应兼具专业性与可操作性。`
   },
   [DebatePhase.COMPLETED]: {
     name: '辩论完成',
@@ -631,7 +673,7 @@ export const useEnhancedDebateFlow = () => {
   /**
    * 保存辩论记录
    */
-  const saveDebateRecord = async (config: UserDebateConfig) => {
+  const saveDebateRecord = async (_config: UserDebateConfig) => {
     // 注释掉自动保存功能，完全依靠用户手动点击保存按钮
     /* 
     try {
@@ -758,11 +800,39 @@ function buildPrompt(speaker: DebateRole, phase: DebatePhase, config: UserDebate
   template = template.replace('{wordLimit}', wordLimit.toString());
   template = template.replace('{side}', speaker === 'positive' ? '正方' : '反方');
   
+  // 如果用户传入了正/反方的简短观点提示，将其注入到提示词开头，帮助模型捕捉用户意图（不覆盖模板要求）
+  const sideHints = (config as any).sideHints as { positive?: string; negative?: string } | undefined;
+  const sideHintText = sideHints ? (speaker === 'positive' ? sideHints.positive : sideHints.negative) : undefined;
+
+  if (sideHintText && sideHintText.trim()) {
+    return `（用户提示：${sideHintText.trim()}）\n` + template;
+  }
+
   return template;
 }
 
 function buildMessageHistory(speaker: DebateRole, phase: DebatePhase, config: UserDebateConfig, prompt: string) {
-  const systemPrompt = `你是${getSpeakerName(speaker)}，正在参与关于"${config.topic}"的专业辩论。当前阶段：${DEBATE_PHASES[phase].name}。请严格按照要求进行发言。`;
+  const systemPrompt = `你是${getSpeakerName(speaker)}，正在参与关于"${config.topic}"的专业辩论。当前阶段：${DEBATE_PHASES[phase].name}。
+
+作为一个辩手，你应该：
+1. 展现真实且具有创造性的思维，不要机械性地堆砌论据
+2. 根据辩题的性质灵活选择论证方式：
+   - 对于伦理道德类议题，注重情感共鸣和价值观分析
+   - 对于社会现象类议题，结合具体案例和生活经验
+   - 对于政策制度类议题，权衡利弊并考虑可行性
+   - 对于科技发展类议题，关注趋势和影响
+
+3. 保持开放性思维：
+   - 承认问题的复杂性，避免非黑即白
+   - 主动思考对方可能的顾虑和疑问
+   - 适时调整论证策略和重点
+
+4. 展现辩论的艺术性：
+   - 适当运用修辞和比喻增强表现力
+   - 在严谨论证之外也要有感染力
+   - 根据场景选择恰当的语气和表达方式
+
+请记住：好的辩论不是简单的对抗，而是通过理性的交锋达到真理的探索。`;
   
   return [
     { role: 'system' as const, content: systemPrompt },

@@ -1,0 +1,87 @@
+/* 全局样式覆盖，确保在黑色背景下输入文字为白色 */
+
+/* 登录/注册/重置密码页面的特殊样式 */
+.auth-page-dark {
+  background: #0a0a0a;
+}
+
+/* 在黑色背景页面中的输入框文字强制为白色 */
+.auth-page-dark input,
+.auth-page-dark .t-input__inner,
+.auth-page-dark .t-input input,
+.auth-page-dark textarea,
+.auth-page-dark .t-input,
+.auth-page-dark .t-input__wrap input {
+  color: #ffffff !important;
+  caret-color: #00ffff !important; /* 青色光标 */
+  background-color: transparent !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 处理密码输入框 */
+.auth-page-dark input[type="password"],
+.auth-page-dark .t-input__inner[type="password"] {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 处理输入框中的按钮和图标 */
+.auth-page-dark .t-input__suffix,
+.auth-page-dark .t-input__suffix .t-button,
+.auth-page-dark .t-input__suffix button,
+.auth-page-dark .t-button--text {
+  color: #ffffff !important;
+}
+
+/* 处理占位符文字颜色 */
+.auth-page-dark input::placeholder,
+.auth-page-dark .t-input__inner::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+  opacity: 1 !important;
+}
+
+/* 确保按钮文字清晰可见 */
+.auth-page-dark .t-button:not(.t-button--text) {
+  color: #000000 !important;
+}
+
+/* 输入框聚焦时的样式 */
+.auth-page-dark .t-input:focus-within,
+.auth-page-dark .t-input__wrap:focus-within {
+  border-color: #00ffff !important;
+  box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2) !important;
+}
+
+/* 隐藏任何可能的双重边框 */
+.auth-page-dark .t-input,
+.auth-page-dark .t-input__wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* 确保自定义input类的边框正确 */
+.auth-page-dark .auth-input {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+}
+
+.auth-page-dark .auth-input:focus-within {
+  border-color: #00ffff !important;
+  box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.2) !important;
+}
+
+/* 隐藏TDesign组件自带的眼睛图标 */
+.auth-page-dark .t-input__suffix .t-input__suffix-icon,
+.auth-page-dark .t-input__extra,
+.auth-page-dark .t-input__suffix-icon {
+  display: none !important;
+}
+
+/* 密码显示图标样式 */
+.auth-page-dark .t-input__password-icon,
+.auth-page-dark .t-input__suffix .t-icon {
+  display: flex !important;
+  color: #ffffff !important;
+}

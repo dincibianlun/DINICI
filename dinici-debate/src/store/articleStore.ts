@@ -13,29 +13,8 @@ export interface Article {
   updated_at?: string;
 }
 
-// 初始静态文章
-const INITIAL_ARTICLES: Article[] = [
-  {
-    id: '1',
-    title: '如何使用AI辩论平台',
-    content: '# 如何使用AI辩论平台\n\n这是一个示例教程文章，介绍了如何使用我们的AI辩论平台。\n\n## 主要功能\n\n1. 创建辩论\n2. 参与辩论\n3. 观看辩论结果',
-    category: 'tutorial',
-    tags: ['教程', '入门'],
-    created_at: '2025-01-01T12:00:00Z',
-    is_published: true,
-    author_id: 'admin'
-  },
-  {
-    id: '2',
-    title: '平台使用常见问题',
-    content: '# 平台使用常见问题\n\n## 问题1：如何注册账号？\n\n答：点击右上角的登录按钮，选择注册选项。\n\n## 问题2：如何创建辩论？\n\n答：在首页点击"开始辩论"按钮。',
-    category: 'faq',
-    tags: ['FAQ', '帮助'],
-    created_at: '2025-01-02T12:00:00Z',
-    is_published: true,
-    author_id: 'admin'
-  }
-];
+// 初始文章为空数组，将从数据库加载
+const INITIAL_ARTICLES: Article[] = [];
 
 interface ArticleStore {
   articles: Article[];

@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Button, MessagePlugin, Select, Progress, Card, Tag, Loading } from 'tdesign-react';
 import { Header } from '../components/Header';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { StreamingDebateMessage } from '../components/StreamingDebateMessage';
 import { useEnhancedDebateFlow } from '../hooks/useEnhancedDebateFlow';
+import { audioPlayer } from '../services/audioPlayerService';
 import { userConfigManager, UserDebateConfig, DebatePhase } from '../services/userConfigService';
 import { handleError, EnhancedConfigValidator } from '../utils/errorHandler';
 import { supabase } from '../lib/supabaseClient';
@@ -33,7 +35,10 @@ const PHASE_NAMES: Record<DebatePhase, string> = {
   [DebatePhase.COMPLETED]: '辩论完成'
 };
 
-export const EnhancedDebatePage = () => {
+// 修复：只导入一次Message类型
+import type { Message } from '../types/debate';
+
+export const EnhancedDebatePage: React.FC = () => {
   const {
     currentPhase,
     currentSpeaker,
@@ -52,11 +57,13 @@ export const EnhancedDebatePage = () => {
   const [userConfig, setUserConfig] = useState<UserDebateConfig | null>(null);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
   const [debateTopic, setDebateTopic] = useState<string>('人工智能的发展对人类社会利大于弊');
+  const [positiveStance, setPositiveStance] = useState<string>('');
+  const [negativeStance, setNegativeStance] = useState<string>('');
   const [positiveModel, setPositiveModel] = useState('openai/gpt-5-chat');
   const [negativeModel, setNegativeModel] = useState('anthropic/claude-3-haiku');
   const [judgeModel, setJudgeModel] = useState('openai/gpt-5-chat');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(false); // 默认关闭自动播放
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -89,7 +96,7 @@ export const EnhancedDebatePage = () => {
         setNegativeModel(config.negativeModel);
         setJudgeModel(config.judgeModel);
         setVoiceEnabled(config.debateSettings.voiceEnabled);
-        setAutoPlayEnabled(true); // 默认开启自动播放
+        setAutoPlayEnabled(config.debateSettings.autoPlayEnabled ?? false); // 使用用户的自动播放设置，默认关闭
       } else {
         MessagePlugin.warning('未找到完整的用户配置，请先在设置中配置API密钥和TTS参数');
       }
@@ -142,13 +149,21 @@ export const EnhancedDebatePage = () => {
         judgeModel,
         debateSettings: {
           ...userConfig.debateSettings,
-          voiceEnabled
+          voiceEnabled,
+          autoPlayEnabled
+        },
+        sideHints: {
+          positive: positiveStance?.trim() || undefined,
+          negative: negativeStance?.trim() || undefined
         }
       };
 
       // 设置音频播放服务的自动播放状态
-      const { audioPlayer } = await import('../services/audioPlayerService');
-      audioPlayer.setAutoPlay(autoPlayEnabled && voiceEnabled);
+      // 修复：使用正确的audioPlayerService并检查setAutoPlay方法是否存在
+      const audioPlayerModule = await import('../services/audioPlayerService');
+      if (audioPlayerModule.audioPlayer && typeof audioPlayerModule.audioPlayer.setAutoPlay === 'function') {
+        audioPlayerModule.audioPlayer.setAutoPlay(autoPlayEnabled && voiceEnabled);
+      }
 
       // 启动辩论
       const success = await startEnhancedDebate(enhancedConfig);
@@ -301,16 +316,20 @@ export const EnhancedDebatePage = () => {
     return messageIndex === messages.length - 1 && isLoading;
   };
 
-
-
-  return (
-      <div style={{ minHeight: '100vh', background: '#f8f9fa', color: '#333333', fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif', fontSize: '1.1rem' }}>
+  const renderContent = () => {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#f8f9fa', 
+        color: '#333333', 
+        fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif', 
+        fontSize: '1.1rem' 
+      }}>
         <Header />
         <Breadcrumb />
         
         <div style={{ padding: '1rem' }}>
-
-        {/* 错误显示 */}
+          {/* 错误显示 */}
         {error && (
           <Card style={{ 
             marginBottom: '1.5rem',
@@ -337,11 +356,32 @@ export const EnhancedDebatePage = () => {
                 <h3 style={{ margin: 0, color: '#495057' }}>
                   {PHASE_NAMES[currentPhase]}
                 </h3>
-                {currentSpeaker && (
-                  <Tag theme="primary" style={{ marginTop: '0.5rem' }}>
-                    当前发言: {currentSpeaker === 'positive' ? '正方' : currentSpeaker === 'negative' ? '反方' : currentSpeaker === 'judge' ? '裁判' : '主持人'}
-                  </Tag>
-                )}
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                  {currentSpeaker && (
+                    <Tag theme="primary">
+                      当前发言: {currentSpeaker === 'positive' ? '正方' : currentSpeaker === 'negative' ? '反方' : currentSpeaker === 'judge' ? '裁判' : '主持人'}
+                    </Tag>
+                  )}
+                  {voiceEnabled && (
+                    <Tag
+                      theme={autoPlayEnabled ? "success" : "default"}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        const newAutoPlayState = !autoPlayEnabled;
+                        setAutoPlayEnabled(newAutoPlayState);
+                        // 修复：使用正确的audioPlayerService并检查setAutoPlay方法是否存在
+                        import('../services/audioPlayerService').then(({ audioPlayer }) => {
+                          if (audioPlayer && typeof audioPlayer.setAutoPlay === 'function') {
+                            audioPlayer.setAutoPlay(newAutoPlayState);
+                          }
+                        });
+                        MessagePlugin.info(newAutoPlayState ? '已开启自动播放' : '已关闭自动播放');
+                      }}
+                    >
+                      {autoPlayEnabled ? '🔊 自动播放已开启' : '🔇 自动播放已关闭'}
+                    </Tag>
+                  )}
+                </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
@@ -451,8 +491,62 @@ export const EnhancedDebatePage = () => {
                 </Button>
               </div>
             ) : (
-              <>                <div style={{ marginBottom: '1.5rem' }}>                  <input                    type="text"                    value={debateTopic}                    onChange={(e) => setDebateTopic(e.target.value)}                    style={{                      width: '100%',                      padding: '1rem',                      background: '#fff',                      border: '1px solid #ced4da',                      borderRadius: '6px',                      color: '#000000 !important',                      fontSize: '1.2rem'                    }}                    placeholder="请输入辩论题目"                    className="tdesign-input-fix"                  />                </div>                
-                <h4 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#495057' }}>                  AI模型配置                </h4>                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <input
+                    type="text"
+                    value={debateTopic}
+                    onChange={(e) => setDebateTopic(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '1rem',
+                      background: '#fff',
+                      border: '1px solid #ced4da',
+                      borderRadius: '6px',
+                      color: '#000000 !important',
+                      fontSize: '1.2rem'
+                    }}
+                    placeholder="请输入辩论题目"
+                    className="tdesign-input-fix"
+                  />
+                </div>
+
+                {/* 可选：正反方观点输入（渲染在题目下方） */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '1rem', marginBottom: '0.5rem', color: '#28a745' }}>
+                      正方观点（可选）
+                    </label>
+                    <input
+                      type="text"
+                      value={positiveStance}
+                      onChange={(e) => setPositiveStance(e.target.value)}
+                      placeholder="为正方提供一个简短观点提示（可选）"
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #dee2e6' }}
+                      className="tdesign-input-fix"
+                    />
+                    <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.5rem' }}>此项为可选，若填写将作为模型生成时的上下文提示。</div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '1rem', marginBottom: '0.5rem', color: '#dc3545' }}>
+                      反方观点（可选）
+                    </label>
+                    <input
+                      type="text"
+                      value={negativeStance}
+                      onChange={(e) => setNegativeStance(e.target.value)}
+                      placeholder="为反方提供一个简短观点提示（可选）"
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #dee2e6' }}
+                      className="tdesign-input-fix"
+                    />
+                    <div style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.5rem' }}>此项为可选，若填写将作为模型生成时的上下文提示。</div>
+                  </div>
+                </div>
+
+                <h4 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#495057' }}>
+                  AI模型配置
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
                   <div>
                       <label style={{ display: 'block', fontSize: '1.3rem', marginBottom: '0.75rem', color: '#28a745' }}>
                         正方模型
@@ -549,8 +643,10 @@ export const EnhancedDebatePage = () => {
                       <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>动态交替发言：质询和自由辩论支持多轮交互</li>
                       <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>高质量语音合成：基于火山引擎TTS技术</li>
                       <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>流式内容生成：支持实时查看AI思考过程</li>
-                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>自动语音播放：音频生成完成后自动播放，按顺序排队</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>智能语音播放：可选择自动播放或手动控制，支持暂停/继续</li>
                       <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>详细辩论记录：完整保存所有发言内容</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>详细辩论记录：完整保存所有发言内容</li>
+                      <li style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>暂不支持保存语音文件服务：当前仅支持生成并播放语音，但不会将语音文件上传或长期存储</li>
                     </ul>
                   </div>
                   
@@ -576,76 +672,158 @@ export const EnhancedDebatePage = () => {
         <main style={{ marginBottom: '5rem', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {messages.map((msg, index) => {
-              const isPositive = msg.role === 'positive';
-              const isNegative = msg.role === 'negative';
-              const isHost = msg.role === 'host';
+              // 修复：添加缺失的变量定义和正确的属性访问
+              const isLastMessage = index === messages.length - 1;
+              const isCurrentLoading = isLastMessage && isLoading;
               
               return (
-                <div 
-                  key={msg.id}
+                <div
+                  key={msg.id || index}
                   style={{
-                    display: 'flex',
-                    justifyContent: isPositive ? 'flex-start' : isNegative ? 'flex-end' : 'center',
-                    marginBottom: '1rem'
+                    background: '#ffffff',
+                    border: '1px solid #e9ecef',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    marginBottom: '1rem',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    position: 'relative'
                   }}
                 >
-                  <div
-                    style={{
-                      maxWidth: '70%',
-                      padding: '1rem 1.5rem',
-                      borderRadius: isPositive ? '24px 24px 24px 8px' : 
-                                   isNegative ? '24px 24px 8px 24px' : '24px',
-                      background: isPositive ? '#f8f9fa' :
-                                  isNegative ? '#f8f9fa' :
-                                  isHost ? '#f8f9fa' :
-                                  '#f8f9fa',
-                      border: `1px solid ${isPositive ? '#28a745' :
-                                       isNegative ? '#dc3545' :
-                                       isHost ? '#ffc107' :
-                                       '#6c757d'}`,
-                      position: 'relative',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    {/* 发言者标签 */}
-                    <div style={{
-                      fontSize: '0.875rem',
-                      color: isPositive ? '#28a745' :
-                             isNegative ? '#dc3545' :
-                             isHost ? '#ffc107' :
-                             '#6c757d',
-                      fontWeight: 600,
-                      marginBottom: '0.5rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <span>
-                        {msg.speaker || (
-                          msg.role === 'host' ? '主持人' : 
-                          msg.role === 'positive' ? '正方' : 
-                          msg.role === 'negative' ? '反方' : '裁判'
-                        )}
-                      </span>
-                      <span style={{ color: '#888', fontSize: '0.6875rem' }}>
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </span>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'flex-start',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: msg.role === 'positive' ? '#28a745' : 
+                                   msg.role === 'negative' ? '#dc3545' : 
+                                   msg.role === 'judge' ? '#007bff' : '#ffc107',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        fontSize: '0.75rem'
+                      }}>
+                        {msg.role === 'positive' ? '正' : 
+                         msg.role === 'negative' ? '反' : 
+                         msg.role === 'judge' ? '裁' : '主'}
+                      </div>
+                      <div>
+                        <div style={{ 
+                          fontWeight: 'bold', 
+                          color: '#495057',
+                          fontSize: '1.1rem'
+                        }}>
+                          {msg.speaker}
+                        </div>
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#6c757d',
+                          marginTop: '0.125rem'
+                        }}>
+                          {new Date(msg.timestamp || Date.now()).toLocaleTimeString()}
+                        </div>
+                      </div>
                     </div>
                     
-                    {/* 内容 */}
+                    <Tag 
+                      theme={msg.role === 'positive' ? "success" : 
+                            msg.role === 'negative' ? "danger" : 
+                            msg.role === 'judge' ? "primary" : "warning"}
+                      style={{ 
+                        fontSize: '0.75rem',
+                        padding: '0.125rem 0.5rem'
+                      }}
+                    >
+                      {msg.role === 'positive' ? '正方' : 
+                       msg.role === 'negative' ? '反方' : 
+                       msg.role === 'judge' ? '裁判' : '主持人'}
+                    </Tag>
+                  </div>
+                  
+                  <div style={{ 
+                    lineHeight: 1.8, 
+                    color: '#495057',
+                    fontSize: '1.1rem',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}>
+                    <StreamingDebateMessage 
+                      content={msg.content}
+                      isStreaming={isCurrentLoading && msg.content === messages[messages.length - 1]?.content}
+                    />
+                    
+                    {/* 音频控件 */}
+                    {(msg.hasAudio || msg.audioGenerating || msg.audioError) && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        {msg.audioGenerating && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            color: '#888',
+                            fontSize: '0.75rem'
+                          }}>
+                            <Loading size="small" />
+                            语音合成中...
+                          </div>
+                        )}
+                        
+                        {msg.hasAudio && (
+                          <Button
+                            size="small"
+                            onClick={() => {
+                              try {
+                                import('../services/audioPlayerService').then(({ audioPlayer }) => {
+                                  audioPlayer.playAudio(msg.content, msg.role);
+                                });
+                              } catch (error) {
+                                console.error('播放音频失败:', error);
+                              }
+                            }}
+                            style={{
+                              background: '#f8f9fa',
+                              border: '1px solid #6c757d',
+                              color: '#6c757d'
+                            }}
+                          >
+                            🔊 播放语音
+                          </Button>
+                        )}
+                        
+                        {msg.audioError && (
+                          <span style={{
+                            color: '#ff6b6b',
+                            fontSize: '0.75rem'
+                          }}>
+                            语音生成失败
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* 阶段和字数信息 */}
                     <div style={{
-                      color: '#333333',
-                      lineHeight: 1.6,
-                      fontSize: '1rem',
-                      whiteSpace: 'pre-wrap'
+                      marginTop: '0.5rem',
+                      fontSize: '0.6875rem',
+                      color: '#666',
+                      textAlign: 'right'
                     }}>
-                      <span className={isActiveSpeaker(index) ? 'typing-indicator' : ''}>
-                        {msg.content}
-                      </span>
-                      {isActiveSpeaker(index) && (
-                        <span className="typing-cursor"></span>
-                      )}
+                      {PHASE_NAMES[msg.phase as DebatePhase] || '未知阶段'} • {msg.wordCount || 0}字
                     </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        </main>
                     
                     {/* 音频控件 */}
                     {(msg.hasAudio || msg.audioGenerating || msg.audioError) && (
@@ -764,6 +942,23 @@ export const EnhancedDebatePage = () => {
             <div ref={messagesEndRef} />
           </div>
         </main>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ 
+      minHeight: '100vh', 
+      background: '#f8f9fa', 
+      color: '#333333', 
+      fontFamily: '"Microsoft YaHei", "PingFang SC", sans-serif', 
+      fontSize: '1.1rem' 
+    }}>
+      <Header />
+      <Breadcrumb />
+      
+      <div style={{ padding: '1rem' }}>
+        {renderContent()}
       </div>
     </div>
   );

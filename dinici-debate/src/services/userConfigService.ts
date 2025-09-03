@@ -29,6 +29,12 @@ export interface UserDebateConfig {
     wordLimits: Record<DebatePhase, number>; // 字数控制
     freeDebateRounds: number;
     voiceEnabled: boolean;
+    autoPlayEnabled?: boolean; // 是否开启自动播放音频
+  };
+  // 可选：为正反双方提供的简短观点提示（前端可选输入）
+  sideHints?: {
+    positive?: string;
+    negative?: string;
   };
 }
 
@@ -45,16 +51,8 @@ export enum DebatePhase {
   COMPLETED = 'completed'
 }
 
-// 字数限制配置
-export interface DebateWordLimits {
-  [DebatePhase.HOST_INTRO]: number;        // 主持人开场: 100-150字
-  [DebatePhase.STATEMENT]: number;         // 立论阶段: 200-300字  
-  [DebatePhase.INQUIRY]: number;           // 质询问题: 50-80字
-  [DebatePhase.REBUTTAL]: number;          // 驳论发言: 150-250字
-  [DebatePhase.FREE_DEBATE]: number;       // 自由辩论: 100-200字
-  [DebatePhase.FINAL_SUMMARY]: number;     // 总结陈词: 150-250字
-  [DebatePhase.JUDGE_VERDICT]: number;     // 裁判评议: 200-400字
-}
+// 字数限制配置（覆盖所有阶段）
+export type DebateWordLimits = Record<DebatePhase, number>;
 
 // 默认字数限制
 export const DEFAULT_WORD_LIMITS: DebateWordLimits = {

@@ -15,6 +15,18 @@ textarea,
   background-color: #ffffff !important;
 }
 
+/* 只为白色背景的输入框应用黑色光标 */
+.debate-page input,
+.settings-page input,
+.debate-topic-input,
+.api-key-input,
+.tts-config-input,
+input[type="text"]:not(.auth-input):not(.auth-page-dark input),
+textarea:not(.auth-input):not(.auth-page-dark textarea),
+.t-input:not(.auth-input):not(.auth-page-dark .t-input) {
+  caret-color: #000000 !important; /* 黑色光标 */
+}
+
 /* 编辑器文本颜色修复 */
 .toastui-editor-contents p,
 .toastui-editor-contents h1,

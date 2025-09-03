@@ -1,0 +1,101 @@
+/* 修复登录/注册页面输入框样式问题 */
+
+/* 1. 修复输入框两边的黑色边缘 */
+.auth-input {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  outline: none !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.auth-input .t-input__inner {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.auth-input:focus-within {
+  border-color: #00ffff !important;
+  box-shadow: 0 0 0 1px rgba(0, 255, 255, 0.2) !important;
+}
+
+/* 2. 修改输入框光标颜色为白色 */
+.auth-input .t-input__inner,
+.auth-input input,
+input.t-input__inner,
+.t-input input,
+input[type="text"],
+input[type="password"],
+textarea {
+  caret-color: #ffffff !important; /* 白色光标 */
+}
+
+/* 修复输入框内文字清晰可见 */
+.auth-input input,
+.auth-input .t-input__inner,
+.auth-input input::placeholder,
+.auth-input .t-input__inner::placeholder,
+.auth-input .t-input__suffix,
+.auth-input .t-input__clear,
+.auth-input button,
+.auth-input .t-button {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+
+/* 确保按钮文字颜色正确 */
+.auth-button {
+  color: #000000 !important;
+}
+
+/* 修复密码框的显示/隐藏按钮颜色 */
+.auth-input .t-input__suffix {
+  color: #888888 !important;
+}
+
+/* 修复输入框边框黑色重叠问题 */
+.auth-input .t-input,
+.auth-input .t-input__wrap {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 修复placeholder颜色 */
+.auth-input input::placeholder,
+.auth-input .t-input__inner::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1 !important;
+}
+
+/* 强制所有黑色背景下的输入框文字显示为白色 */
+body .auth-input input,
+body .auth-input .t-input__inner,
+body .auth-input .t-input input,
+body input.auth-input,
+body .auth-input input.t-input__inner,
+body .auth-input .t-input,
+body .auth-input .t-input__wrap input,
+.t-input__wrap .auth-input input {
+  color: #ffffff !important;
+}
+
+/* 特别处理密码输入框 */
+body .auth-input input[type="password"],
+body .auth-input .t-input__inner[type="password"] {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* 将显示和隐藏按钮设置为白色 */
+body .auth-input .t-input__suffix,
+body .auth-input .t-input__suffix .t-button,
+body .auth-input .t-input__suffix button {
+  color: #ffffff !important;
+}

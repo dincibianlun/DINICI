@@ -8,7 +8,7 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute = ({ 
-  redirectPath = '/login',
+  redirectPath = '/auth',
   children 
 }: PrivateRouteProps) => {
   const { user, loading } = useAuth();

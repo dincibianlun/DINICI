@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Loading, Tag, Typography, MessagePlugin } from 'tdesign-react';
 import { supabase } from '../lib/supabaseClient';
-import { LeftOutlined } from '@ant-design/icons';
-import { viewCase } from '../services/caseService';
+import { LeftOutlined, HeartOutlined, HeartFilled } from '@ant-design/icons';
+import { viewCase, likeCase } from '../services/caseService';
 import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { Breadcrumb } from '../components/Breadcrumb';
@@ -38,6 +38,8 @@ export const CaseDetailPage = () => {
   const navigate = useNavigate();
   const [debateRecord, setDebateRecord] = useState<DebateRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -47,6 +49,11 @@ export const CaseDetailPage = () => {
     // 记录案例浏览统计
     if (id) {
       viewCase(id, user?.id).catch(console.error);
+    }
+
+    // 检查用户点赞状态
+    if (user && id) {
+      checkLikeStatus();
     }
   }, [id, user?.id]);
 
@@ -66,12 +73,140 @@ export const CaseDetailPage = () => {
       
       if (data) {
         setDebateRecord(data as DebateRecord);
+        setLikeCount(data.likes || 0);
       }
     } catch (err) {
       console.error('Error fetching debate record:', err);
       MessagePlugin.error('获取辩论记录失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 检查用户点赞状态
+  const checkLikeStatus = async () => {
+    if (!user || !id) return;
+    
+    try {
+      // 先尝试查询user_likes表
+      try {
+        const { data, error } = await supabase
+          .from('user_likes')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('case_id', id)
+          .single();
+        
+        if (!error && data) {
+          setLiked(true);
+          return;
+        }
+      } catch (error) {
+        console.warn('查询user_likes表失败，表可能不存在:', error);
+      }
+      
+      // 如果user_likes表不存在或查询失败，尝试查询user_activity_stats表
+      try {
+        const { data, error } = await supabase
+          .from('user_activity_stats')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('activity_type', 'like')
+          .gt('count', 0)
+          .single();
+        
+        if (!error && data) {
+          setLiked(true);
+          return;
+        }
+      } catch (error) {
+        console.warn('查询user_activity_stats表失败:', error);
+      }
+      
+      // 如果两个表都查询失败，默认为未点赞状态
+      setLiked(false);
+    } catch (err) {
+      console.error('检查点赞状态失败:', err);
+      setLiked(false);
+    }
+  };
+
+  // 处理点赞/取消点赞
+  const handleLike = async () => {
+    if (!user) {
+      MessagePlugin.warning('请先登录后再点赞');
+      return;
+    }
+
+    if (!id) return;
+
+    try {
+      if (liked) {
+        // 取消点赞
+        // 1. 从user_likes表中删除记录
+        try {
+          const { error } = await supabase
+            .from('user_likes')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('case_id', id);
+
+          if (error && error.code !== '42P01') { // 42P01是表不存在的错误
+            console.error('删除点赞记录失败:', error);
+          }
+        } catch (error) {
+          console.error('删除点赞记录操作异常:', error);
+        }
+
+        // 2. 更新案例点赞数
+        await supabase
+          .from('debates')
+          .update({ likes: Math.max(0, likeCount - 1) })
+          .eq('id', id);
+
+        setLiked(false);
+        setLikeCount(prev => Math.max(0, prev - 1));
+        MessagePlugin.success('已取消点赞');
+      } else {
+        // 添加点赞
+        // 1. 尝试向user_likes表添加记录
+        try {
+          const { error: insertError } = await supabase
+            .from('user_likes')
+            .insert({
+              user_id: user.id,
+              case_id: id,
+              created_at: new Date().toISOString()
+            });
+
+          if (insertError && insertError.code !== '42P01') { // 42P01是表不存在的错误
+            console.error('添加点赞记录失败:', insertError);
+          }
+        } catch (error) {
+          console.error('添加点赞记录操作异常:', error);
+        }
+
+        // 2. 更新案例点赞数
+        await supabase
+          .from('debates')
+          .update({ likes: likeCount + 1 })
+          .eq('id', id);
+
+        // 3. 记录用户活动（无论user_likes表是否存在）
+        try {
+          await likeCase(id, user.id);
+        } catch (err) {
+          console.warn('记录点赞活动失败（不影响主要功能）:', err);
+        }
+
+        setLiked(true);
+        setLikeCount(prev => prev + 1);
+        MessagePlugin.success('点赞成功');
+      }
+    } catch (err) {
+      console.error('点赞操作失败:', err);
+      // 显示更用户友好的错误信息
+      MessagePlugin.error('点赞操作失败，请稍后再试');
     }
   };
 
@@ -146,13 +281,40 @@ export const CaseDetailPage = () => {
             </Typography.Title>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-              <Tag style={{ background: '#e8f5e8', border: '1px solid #28a745', color: '#28a745' }}>
+              <Tag style={{ 
+                background: '#e8f5e8', 
+                border: '1px solid #28a745', 
+                color: '#28a745',
+                fontSize: '0.95rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                fontWeight: 500,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}>
                 正方：{debateRecord.positive_model.split('/').pop()}
               </Tag>
-              <Tag style={{ background: '#ffeaea', border: '1px solid #dc3545', color: '#dc3545' }}>
+              <Tag style={{ 
+                background: '#ffeaea', 
+                border: '1px solid #dc3545', 
+                color: '#dc3545',
+                fontSize: '0.95rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                fontWeight: 500,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}>
                 反方：{debateRecord.negative_model.split('/').pop()}
               </Tag>
-              <Tag style={{ background: '#e7f3ff', border: '1px solid #007bff', color: '#007bff' }}>
+              <Tag style={{ 
+                background: '#e7f3ff', 
+                border: '1px solid #007bff', 
+                color: '#007bff',
+                fontSize: '0.95rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                fontWeight: 500,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}>
                 裁判：{debateRecord.judge_model.split('/').pop()}
               </Tag>
             </div>
@@ -161,6 +323,39 @@ export const CaseDetailPage = () => {
               <span>创建时间：{new Date(debateRecord.created_at).toLocaleString()}</span>
               <span>发言数：{messages.length}</span>
               {debateRecord.views && <span>浏览：{debateRecord.views}</span>}
+              
+              {/* 点赞按钮 */}
+              <span 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  cursor: 'pointer',
+                  color: liked ? '#ff4d4f' : '#666666',
+                  transition: 'all 0.3s ease',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  border: `1px solid ${liked ? '#ff4d4f' : '#d9d9d9'}`,
+                  backgroundColor: liked ? '#fff2f0' : 'transparent',
+                  fontSize: '0.875rem'
+                }}
+                onClick={handleLike}
+                onMouseEnter={(e) => { 
+                  if (!liked) {
+                    e.currentTarget.style.color = '#ff4d4f';
+                    e.currentTarget.style.borderColor = '#ff4d4f';
+                  }
+                }}
+                onMouseLeave={(e) => { 
+                  if (!liked) {
+                    e.currentTarget.style.color = '#666666';
+                    e.currentTarget.style.borderColor = '#d9d9d9';
+                  }
+                }}
+              >
+                {liked ? <HeartFilled style={{ fontSize: '16px' }} /> : <HeartOutlined style={{ fontSize: '16px' }} />}
+                <span>点赞{likeCount > 0 ? `(${likeCount})` : ''}</span>
+              </span>
             </div>
           </div>
 

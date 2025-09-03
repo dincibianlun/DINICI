@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Loading } from 'tdesign-react';
-import { audioPlayer } from '../services/audioPlayerService';
+import { audioPlayer, AudioPlayerEvent, AudioPlayerService } from '../services/audioPlayerService.new';
+import { PlayCircleIcon, PauseCircleIcon } from 'tdesign-icons-react';
 
 interface StreamingDebateMessageProps {
   role: 'host' | 'positive' | 'negative' | 'judge';
@@ -10,6 +11,7 @@ interface StreamingDebateMessageProps {
   audioGenerating?: boolean;
   audioError?: boolean;
   onAudioPlay?: () => void;
+  messageId: string; // 添加messageId属性
 }
 
 export const StreamingDebateMessage: React.FC<StreamingDebateMessageProps> = ({
@@ -19,10 +21,67 @@ export const StreamingDebateMessage: React.FC<StreamingDebateMessageProps> = ({
   hasAudio,
   audioGenerating,
   audioError,
-  onAudioPlay
+  onAudioPlay,
+  messageId // 添加 messageId
 }) => {
   const [displayedContent, setDisplayedContent] = useState('');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
   const typewriterRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 监听音频状态
+  useEffect(() => {
+    const handleAudioEvent = (event: any) => {
+      if (event.messageId === messageId) {
+        switch (event.type) {
+          case 'start':
+            setIsPlaying(true);
+            setIsPaused(false);
+            break;
+          case 'end':
+            setIsPlaying(false);
+            setIsPaused(false);
+            break;
+          case 'pause':
+            setIsPlaying(false);
+            setIsPaused(true);
+            break;
+          case 'resume':
+            setIsPlaying(true);
+            setIsPaused(false);
+            break;
+          case 'error':
+            setIsPlaying(false);
+            setIsPaused(false);
+            break;
+        }
+      }
+    };
+
+    audioPlayer.addEventListener(handleAudioEvent);
+    return () => audioPlayer.removeEventListener(handleAudioEvent);
+  }, [messageId]);
+
+  // 当语音生成完成时设置audioReady
+  useEffect(() => {
+    if (hasAudio && !audioGenerating && !audioError) {
+      setAudioReady(true);
+    }
+  }, [hasAudio, audioGenerating, audioError]);
+
+  const handlePlayClick = () => {
+    if (isPaused) {
+      audioPlayer.resumeAudio();
+    } else if (isPlaying) {
+      audioPlayer.pauseAudio();
+    } else {
+      onAudioPlay?.(); // 通知父组件音频将要开始播放
+      audioPlayer.stopCurrentAudio(); // 停止当前正在播放的任何音频
+      audioPlayer.clearQueue(); // 清空播放队列
+      audioPlayer.playAudio(messageId, role);
+    }
+  };
   
   // 打字机效果
   useEffect(() => {
@@ -107,6 +166,33 @@ export const StreamingDebateMessage: React.FC<StreamingDebateMessageProps> = ({
         
         {/* 状态指示器 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* 语音播放控制 */}
+          {audioReady && (
+            <Button
+              variant="text"
+              shape="circle"
+              onClick={handlePlayClick}
+              icon={isPlaying ? <PauseCircleIcon /> : <PlayCircleIcon />}
+              style={{ color: roleConfig.color }}
+              title={isPlaying ? '暂停' : (isPaused ? '继续' : '播放')}
+            />
+          )}
+          
+          {/* 生成中状态 */}
+          {audioGenerating && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              color: roleConfig.color,
+              fontSize: '0.75rem'
+            }}>
+              <Loading size="small" />
+              <span>生成语音中...</span>
+            </div>
+          )}
+
+          {/* 流式输出状态 */}
           {isStreaming && (
             <div style={{
               display: 'flex',

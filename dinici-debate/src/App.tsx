@@ -62,7 +62,7 @@ function App() {
             <Route path="/analytics" element={<AdminRoute><AnalyticsDashboardPage /></AdminRoute>} />
             
             {/* 管理后台路由 - 仅管理员可访问 */}
-            <Route path="/admin" element={<AdminRoute />}>
+            <Route path="/hao" element={<AdminRoute />}>
               <Route index element={<DashboardPage />} />
               <Route path="users" element={<UserManagementPage />} />
               <Route path="debates" element={<DebateManagementPage />} />

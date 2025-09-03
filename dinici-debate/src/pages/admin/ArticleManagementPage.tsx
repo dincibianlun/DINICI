@@ -14,6 +14,7 @@ import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined
 import { Layout } from 'tdesign-react';
 import MarkdownEditor, { MarkdownEditorRef } from '../../components/MarkdownEditor';
 import { useArticleStore, Article } from '../../store/articleStore';
+import { supabase } from '../../lib/supabaseClient';
 
 const { Content } = Layout;
 
@@ -37,15 +38,66 @@ export const ArticleManagementPage = () => {
   });
   const [tagInput, setTagInput] = useState('');
 
-  // 初始化时设置文章数据
+  // 初始化时从数据库加载文章数据
   useEffect(() => {
-    // 模拟加载延迟
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
+    // 避免频繁加载，使用标志记录是否已加载
+    const articlesLoadedFlag = sessionStorage.getItem('articles_loaded');
     
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchArticles = async () => {
+      // 如果已经加载过文章，则跳过
+      if (articlesLoadedFlag === 'true' && articles.length > 0) {
+        console.log('文章数据已加载，跳过重复加载');
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        console.log('从数据库加载文章数据...');
+        // 从Supabase查询文章数据
+        const { data, error } = await supabase
+          .from('articles')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          console.log(`成功加载 ${data.length} 篇文章`);
+          // 转换数据格式以匹配Article接口
+          const formattedArticles = data.map(article => ({
+            id: article.id,
+            title: article.title,
+            content: article.content,
+            category: article.category,
+            tags: article.tags || [],
+            created_at: article.created_at,
+            is_published: article.is_published,
+            author_id: article.author_id,
+            updated_at: article.updated_at
+          }));
+          
+          // 将数据批量添加到Zustand存储
+          formattedArticles.forEach(article => addArticle(article));
+          
+          // 设置标志，避免重复加载
+          sessionStorage.setItem('articles_loaded', 'true');
+        } else {
+          console.log('数据库中没有文章或查询结果为空');
+        }
+      } catch (error) {
+        console.error('加载文章数据失败:', error);
+        MessagePlugin.error('加载文章数据失败，请刷新页面重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchArticles();
+    
+    // 清理函数，组件卸载时不需要清除标志，因为这是会话级别的
+  }, []); // 移除addArticle依赖，避免循环依赖问题
 
   // 过滤文章
   const filteredArticles = articles.filter((article: Article) => {
@@ -164,7 +216,7 @@ export const ArticleManagementPage = () => {
           if (editorContent && editorContent.trim()) {
             content = editorContent;
           }
-          console.log('获取的编辑器内容:', content.substring(0, 50) + '...');
+          console.log('获取的编辑器内容长度:', content.length, ' 字节');
         } catch (editorError) {
           console.error('获取编辑器内容失败:', editorError);
         }
@@ -177,11 +229,18 @@ export const ArticleManagementPage = () => {
         return;
       }
 
+      // 内容长度检查
+      // 检查内容大小，避免超过PostgreSQL tsvector的限制
+      const contentSizeInBytes = new Blob([content]).size;
+      const MAX_CONTENT_SIZE = 900000; // 设置为900KB，留一些安全边界
+
+      if (contentSizeInBytes > MAX_CONTENT_SIZE) {
+        MessagePlugin.error(`文章内容过大 (${Math.round(contentSizeInBytes/1024)} KB)，超过了数据库限制（最大900 KB）。\n请减少内容或分成多篇文章。`);
+        return;
+      }
+
       // 显示保存进度
       MessagePlugin.loading('正在保存文章...');
-      
-      // 模拟保存延迟
-      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (editingArticle) {
         // 编辑现有文章
@@ -194,23 +253,60 @@ export const ArticleManagementPage = () => {
           updated_at: new Date().toISOString()
         };
         
+        // 更新到数据库
+        const { error } = await supabase
+          .from('articles')
+          .update(updatedArticleData)
+          .eq('id', editingArticle.id);
+          
+        if (error) throw error;
+        
         // 更新到全局存储
         updateArticle(editingArticle.id, updatedArticleData);
         MessagePlugin.success('文章已更新');
       } else {
         // 创建新文章
-        const newArticle: Article = {
-          id: Date.now().toString(),
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        
+        if (!userData || !userData.user) {
+          throw new Error('未获取到用户信息，请重新登录');
+        }
+        
+        const newArticleData = {
           title: articleForm.title,
           content: content,
           category: articleForm.category,
           tags: articleForm.tags,
           is_published: articleForm.is_published,
-          author_id: 'admin',
-          created_at: new Date().toISOString()
+          author_id: userData.user.id
         };
         
+        // 添加到数据库
+        const { data: insertedArticle, error } = await supabase
+          .from('articles')
+          .insert(newArticleData)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        if (!insertedArticle) {
+          throw new Error('文章创建失败，未返回数据');
+        }
+        
         // 添加到全局存储
+        const newArticle: Article = {
+          id: insertedArticle.id,
+          title: insertedArticle.title,
+          content: insertedArticle.content,
+          category: insertedArticle.category,
+          tags: insertedArticle.tags || [],
+          is_published: insertedArticle.is_published,
+          author_id: insertedArticle.author_id,
+          created_at: insertedArticle.created_at
+        };
+        
         addArticle(newArticle);
         MessagePlugin.success('文章已创建');
       }
@@ -236,8 +332,15 @@ export const ArticleManagementPage = () => {
   // 删除文章
   const handleDeleteArticle = async (articleId: string) => {
     try {
-      // 模拟删除延迟
-      await new Promise(resolve => setTimeout(resolve, 500));
+      MessagePlugin.loading('正在删除文章...');
+      
+      // 从数据库删除
+      const { error } = await supabase
+        .from('articles')
+        .delete()
+        .eq('id', articleId);
+        
+      if (error) throw error;
       
       // 从全局存储中删除
       deleteArticle(articleId);

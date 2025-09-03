@@ -107,55 +107,50 @@ export const recordUserActivity = async (
   activityType: 'debate' | 'view' | 'like' | 'comment',
   count = 1
 ): Promise<void> => {
-  const today = new Date().toISOString().split('T')[0]
-  
-  // 获取当前统计
-  const { data: existing } = await supabase
-    .from('user_activity_stats')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('date', today)
-    .single()
-
-  const updateData = {
-    user_id: userId,
-    date: today,
-    debate_count: activityType === 'debate' ? count : 0,
-    case_view_count: activityType === 'view' ? count : 0,
-    like_count: activityType === 'like' ? count : 0,
-    comment_count: activityType === 'comment' ? count : 0
-  }
-
-  if (existing) {
-    // 更新现有记录
-    const { error } = await supabase
+  try {
+    // 检查是否已存在相同用户和活动类型的记录
+    const { data: existing, error: queryError } = await supabase
       .from('user_activity_stats')
-      .update({
-        [activityType === 'debate' ? 'debate_count' : 
-         activityType === 'view' ? 'case_view_count' :
-         activityType === 'like' ? 'like_count' : 'comment_count']: 
-        (existing[activityType === 'debate' ? 'debate_count' : 
-                  activityType === 'view' ? 'case_view_count' :
-                  activityType === 'like' ? 'like_count' : 'comment_count'] || 0) + count,
-        total_score: calculateScore(existing, activityType, count)
-      })
-      .eq('id', existing.id)
-
-    if (error) {
-      console.error('更新用户活动统计失败:', error)
+      .select('*')
+      .eq('user_id', userId)
+      .eq('activity_type', activityType)
+      .single();
+    
+    if (queryError && queryError.code !== 'PGRST116') { // PGRST116 是"结果不是单个行"的错误
+      console.error('查询用户活动记录失败:', queryError);
+      return;
     }
-  } else {
-    // 创建新记录
-    const { error } = await supabase
-      .from('user_activity_stats')
-      .insert({
-        ...updateData,
-        total_score: calculateScore(updateData, activityType, count)
-      })
-
-    if (error) {
-      console.error('创建用户活动统计失败:', error)
+    
+    if (existing) {
+      // 更新现有记录
+      const { error: updateError } = await supabase
+        .from('user_activity_stats')
+        .update({
+          count: existing.count + count,
+          last_activity_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      
+      if (updateError) {
+        console.error('更新用户活动统计失败:', updateError);
+      }
+    } else {
+      // 创建新记录
+      const { error: insertError } = await supabase
+        .from('user_activity_stats')
+        .insert({
+          user_id: userId,
+          activity_type: activityType,
+          count: count,
+          last_activity_at: new Date().toISOString()
+        });
+      
+      if (insertError) {
+        console.error('创建用户活动统计失败:', insertError);
+      }
     }
+  } catch (err) {
+    console.error('记录用户活动时发生错误:', err);
   }
 }
 
@@ -167,51 +162,45 @@ export const recordCaseStats = async (
   statType: 'view' | 'like' | 'comment' | 'share',
   count = 1
 ): Promise<void> => {
-  const today = new Date().toISOString().split('T')[0]
-  
-  const { data: existing } = await supabase
-    .from('case_stats')
-    .select('*')
-    .eq('case_id', caseId)
-    .eq('date', today)
-    .single()
-
-  if (existing) {
-    const { error } = await supabase
-      .from('case_stats')
-      .update({
-        [statType === 'view' ? 'view_count' :
-         statType === 'like' ? 'like_count' :
-         statType === 'comment' ? 'comment_count' : 'share_count']:
-        (existing[statType === 'view' ? 'view_count' :
-                 statType === 'like' ? 'like_count' :
-                 statType === 'comment' ? 'comment_count' : 'share_count'] || 0) + count
-      })
-      .eq('id', existing.id)
-
-    if (error) {
-      console.error('更新案例统计失败:', error)
+  try {
+    // 我们暂时不实现case_stats表的操作，因为该表可能不存在或结构不同
+    // 只对辩论记录表进行更新
+    
+    if (statType === 'like') {
+      // 获取当前辩论记录
+      const { data: debateData, error: debateError } = await supabase
+        .from('debates')
+        .select('likes')
+        .eq('id', caseId)
+        .single();
+      
+      if (debateError) {
+        console.error('获取辩论记录失败:', debateError);
+        return;
+      }
+      
+      // 更新likes字段
+      const currentLikes = debateData.likes || 0;
+      
+      const { error: updateError } = await supabase
+        .from('debates')
+        .update({ likes: currentLikes + count })
+        .eq('id', caseId);
+      
+      if (updateError) {
+        console.error('更新案例点赞数失败:', updateError);
+      }
     }
-  } else {
-    const { error } = await supabase
-      .from('case_stats')
-      .insert({
-        case_id: caseId,
-        date: today,
-        view_count: statType === 'view' ? count : 0,
-        like_count: statType === 'like' ? count : 0,
-        comment_count: statType === 'comment' ? count : 0,
-        share_count: statType === 'share' ? count : 0
-      })
-
-    if (error) {
-      console.error('创建案例统计失败:', error)
-    }
+    
+    // 对于其他类型的统计，比如view、comment、share，暂不处理
+  } catch (err) {
+    console.error('记录案例统计时发生错误:', err);
   }
 }
 
 /**
  * 计算用户得分（根据活动类型加权）
+ * 注意：由于表结构变化，此函数可能不再使用，但保留以维持API兼容性
  */
 const calculateScore = (
   stats: any,

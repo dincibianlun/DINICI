@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { showSuccess, showError } from '../utils/message'
 import { securePasswordReset } from '../patches/passwordResetFix'
 import { Button, Input } from 'tdesign-react'
-
+// 确保引入样式修复
+import '../styles/auth-input-fix.css'
+import '../styles/auth-dark-mode.css'
+import '../styles/password-icon.css'
 
 export default function PasswordReset({ onSuccess }: { onSuccess?: () => void }) {
   const [email, setEmail] = useState('')
@@ -27,6 +30,7 @@ onSuccess?.()
 
   return (
     <div 
+      className="auth-page-dark"
       style={{
         maxWidth: '28rem',
         margin: '0 auto',
@@ -71,30 +75,30 @@ onSuccess?.()
             value={email}
             onChange={setEmail}
             placeholder="请输入注册邮箱"
+            className="auth-input"
             style={{
               marginBottom: '1rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '4px',
-              color: '#ffffff'
-            }}
-            onFocus={(e: any) => {
-              e.currentTarget.style.borderColor = '#00ffff';
-              e.currentTarget.style.boxShadow = '0 0 0 1px rgba(0, 255, 255, 0.2)';
-            }}
-            onBlur={(e: any) => {
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-              e.currentTarget.style.boxShadow = 'none';
+              width: '100%',
+              height: '3rem',
+              fontSize: '0.875rem',
+              padding: '0 1rem',
+              transition: 'all 0.2s ease'
             }}
           />
           <Button
             block
             loading={loading}
             onClick={handleSubmit}
+            className="auth-button"
             style={{
               background: 'linear-gradient(45deg, #00ffff, #ff00ff)',
               border: 'none',
-              color: 'white'
+              height: '3rem',
+              fontSize: '0.875rem',
+              fontWeight: 400,
+              borderRadius: '4px',
+              color: 'white',
+              transition: 'all 0.2s ease'
             }}
           >
             发送重置链接

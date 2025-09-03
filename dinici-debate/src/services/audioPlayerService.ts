@@ -7,10 +7,22 @@ import { audioCache } from './audioCacheService';
 
 class AudioPlayerService {
   private currentAudio: HTMLAudioElement | null = null;
-  private isPlaying = false;
-  private autoPlayEnabled = true; // 新增：自动播放开关
-  private playQueue: Array<{ content: string; role: string }> = []; // 新增：播放队列
-  private isProcessingQueue = false; // 新增：队列处理状态
+  private _isPlaying = false;
+  private _autoPlayEnabled = true; // 自动播放开关
+  private playQueue: Array<{ content: string; role: string }> = []; // 播放队列
+  private isProcessingQueue = false; // 队列处理状态
+
+  public get isPlaying(): boolean {
+    return this._isPlaying;
+  }
+
+  public get autoPlayEnabled(): boolean {
+    return this._autoPlayEnabled;
+  }
+
+  public set autoPlayEnabled(value: boolean) {
+    this._autoPlayEnabled = value;
+  }
 
   /**
    * 播放音频
@@ -42,18 +54,18 @@ class AudioPlayerService {
       };
       
       audio.onplay = () => {
-        this.isPlaying = true;
+        this._isPlaying = true;
         console.log('音频开始播放');
       };
       
       audio.onended = () => {
-        this.isPlaying = false;
+        this._isPlaying = false;
         this.currentAudio = null;
         console.log('音频播放结束');
       };
       
       audio.onerror = (error) => {
-        this.isPlaying = false;
+        this._isPlaying = false;
         this.currentAudio = null;
         console.error('音频播放错误:', error);
       };
@@ -76,7 +88,7 @@ class AudioPlayerService {
       this.currentAudio.pause();
       this.currentAudio.currentTime = 0;
       this.currentAudio = null;
-      this.isPlaying = false;
+      this._isPlaying = false;
       console.log('音频播放已停止');
     }
   }
@@ -85,9 +97,9 @@ class AudioPlayerService {
    * 暂停当前播放的音频
    */
   pauseCurrentAudio(): void {
-    if (this.currentAudio && this.isPlaying) {
+    if (this.currentAudio && this._isPlaying) {
       this.currentAudio.pause();
-      this.isPlaying = false;
+      this._isPlaying = false;
       console.log('音频播放已暂停');
     }
   }
@@ -96,9 +108,9 @@ class AudioPlayerService {
    * 恢复播放
    */
   resumeCurrentAudio(): void {
-    if (this.currentAudio && !this.isPlaying) {
+    if (this.currentAudio && !this._isPlaying) {
       this.currentAudio.play();
-      this.isPlaying = true;
+      this._isPlaying = true;
       console.log('音频播放已恢复');
     }
   }
@@ -120,7 +132,7 @@ class AudioPlayerService {
     }
 
     return {
-      isPlaying: this.isPlaying,
+      isPlaying: this._isPlaying,
       currentTime: this.currentAudio.currentTime,
       duration: this.currentAudio.duration || 0
     };
@@ -139,7 +151,7 @@ class AudioPlayerService {
    * 设置自动播放开关
    */
   setAutoPlay(enabled: boolean): void {
-    this.autoPlayEnabled = enabled;
+    this._autoPlayEnabled = enabled;
     console.log(`自动播放已${enabled ? '开启' : '关闭'}`);
   }
 
@@ -201,13 +213,13 @@ class AudioPlayerService {
    */
   private waitForCurrentAudioToEnd(): Promise<void> {
     return new Promise((resolve) => {
-      if (!this.currentAudio || !this.isPlaying) {
+      if (!this.currentAudio || !this._isPlaying) {
         resolve();
         return;
       }
 
       const checkInterval = setInterval(() => {
-        if (!this.isPlaying || !this.currentAudio) {
+        if (!this._isPlaying || !this.currentAudio) {
           clearInterval(checkInterval);
           resolve();
         }
