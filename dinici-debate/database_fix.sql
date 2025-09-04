@@ -72,10 +72,22 @@ BEGIN
         RAISE NOTICE 'judge_model列已添加';
     END IF;
     
-    -- content 列
+    -- content 列 (主要存储字段)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'content') THEN
         ALTER TABLE debates ADD COLUMN content JSONB DEFAULT '[]'::jsonb;
         RAISE NOTICE 'content列已添加';
+    END IF;
+    
+    -- messages 列 (向后兼容)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'messages') THEN
+        ALTER TABLE debates ADD COLUMN messages JSONB DEFAULT '[]'::jsonb;
+        RAISE NOTICE 'messages列已添加';
+    END IF;
+    
+    -- conversation 列 (向后兼容)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'conversation') THEN
+        ALTER TABLE debates ADD COLUMN conversation JSONB DEFAULT '[]'::jsonb;
+        RAISE NOTICE 'conversation列已添加';
     END IF;
     
     -- user_id 列
@@ -94,6 +106,48 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'created_at') THEN
         ALTER TABLE debates ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
         RAISE NOTICE 'created_at列已添加';
+    END IF;
+    
+    -- positive_arguments 列 (向后兼容)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'positive_arguments') THEN
+        ALTER TABLE debates ADD COLUMN positive_arguments TEXT DEFAULT '';
+        RAISE NOTICE 'positive_arguments列已添加';
+    END IF;
+    
+    -- negative_arguments 列 (向后兼容)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'negative_arguments') THEN
+        ALTER TABLE debates ADD COLUMN negative_arguments TEXT DEFAULT '';
+        RAISE NOTICE 'negative_arguments列已添加';
+    END IF;
+    
+    -- summary 列 (向后兼容)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'summary') THEN
+        ALTER TABLE debates ADD COLUMN summary TEXT DEFAULT '';
+        RAISE NOTICE 'summary列已添加';
+    END IF;
+    
+    -- views 列 (统计字段)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'views') THEN
+        ALTER TABLE debates ADD COLUMN views INTEGER DEFAULT 0;
+        RAISE NOTICE 'views列已添加';
+    END IF;
+    
+    -- likes 列 (统计字段)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'likes') THEN
+        ALTER TABLE debates ADD COLUMN likes INTEGER DEFAULT 0;
+        RAISE NOTICE 'likes列已添加';
+    END IF;
+    
+    -- shares 列 (统计字段)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'shares') THEN
+        ALTER TABLE debates ADD COLUMN shares INTEGER DEFAULT 0;
+        RAISE NOTICE 'shares列已添加';
+    END IF;
+    
+    -- updated_at 列 (统计字段)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'debates' AND column_name = 'updated_at') THEN
+        ALTER TABLE debates ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+        RAISE NOTICE 'updated_at列已添加';
     END IF;
 END $$;
 
@@ -115,21 +169,43 @@ DECLARE
 BEGIN
     -- 插入测试记录
     INSERT INTO debates (
+        user_id,
         topic, 
         positive_model, 
         negative_model, 
         judge_model, 
         content, 
+        messages,
+        conversation,
         is_public,
-        model_config
+        positive_arguments,
+        negative_arguments,
+        summary,
+        model_config,
+        views,
+        likes,
+        shares,
+        created_at,
+        updated_at
     ) VALUES (
+        '11111111-1111-1111-1111-111111111111',  -- 使用测试UUID
         'Test Topic',
         'test-positive-model',
         'test-negative-model', 
         'test-judge-model',
         '[]'::jsonb,
+        '[]'::jsonb,
+        '[]'::jsonb,
         false,
-        '{}'::jsonb
+        '',
+        '',
+        '',
+        '{}'::jsonb,
+        0,
+        0,
+        0,
+        NOW(),
+        NOW()
     ) RETURNING id INTO test_id;
     
     -- 立即删除测试记录

@@ -74,7 +74,17 @@ BEGIN
         RAISE NOTICE 'Added created_at column to debates table';
     END IF;
     
-    -- 检查并添加messages列（用于存储简化后的消息数组）
+    -- 检查并添加content列（主要存储字段）
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'debates' AND column_name = 'content'
+    ) THEN
+        ALTER TABLE debates ADD COLUMN content JSONB DEFAULT '[]'::jsonb;
+        RAISE NOTICE 'Added content column to debates table';
+    END IF;
+    
+    -- 检查并添加messages列（向后兼容）
     IF NOT EXISTS (
         SELECT 1 
         FROM information_schema.columns 
@@ -84,7 +94,7 @@ BEGIN
         RAISE NOTICE 'Added messages column to debates table';
     END IF;
     
-    -- 检查并添加conversation列（用于存储完整对话）
+    -- 检查并添加conversation列（向后兼容）
     IF NOT EXISTS (
         SELECT 1 
         FROM information_schema.columns 
@@ -191,6 +201,7 @@ SET
     judge_model = COALESCE(judge_model, 'unknown'),
     is_public = COALESCE(is_public, FALSE),
     created_at = COALESCE(created_at, NOW()),
+    content = COALESCE(content, '[]'::jsonb),
     messages = COALESCE(messages, '[]'::jsonb),
     conversation = COALESCE(conversation, '[]'::jsonb),
     positive_arguments = COALESCE(positive_arguments, ''),
@@ -208,6 +219,7 @@ WHERE
     judge_model IS NULL OR 
     is_public IS NULL OR 
     created_at IS NULL OR 
+    content IS NULL OR
     messages IS NULL OR 
     conversation IS NULL OR 
     positive_arguments IS NULL OR 
@@ -242,6 +254,7 @@ BEGIN
         positive_model, 
         negative_model, 
         judge_model, 
+        content,
         messages,
         conversation,
         is_public,
@@ -260,6 +273,7 @@ BEGIN
         'test-positive-model',
         'test-negative-model', 
         'test-judge-model',
+        '[]'::jsonb,
         '[]'::jsonb,
         '[]'::jsonb,
         false,

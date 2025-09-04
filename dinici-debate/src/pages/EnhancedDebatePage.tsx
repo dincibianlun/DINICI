@@ -35,9 +35,6 @@ const PHASE_NAMES: Record<DebatePhase, string> = {
   [DebatePhase.COMPLETED]: '辩论完成'
 };
 
-// 导入Message类型
-import type { Message } from '../types/debate';
-
 export const EnhancedDebatePage: React.FC = () => {
   const {
     currentPhase,
@@ -160,11 +157,9 @@ export const EnhancedDebatePage: React.FC = () => {
 
       // 设置音频播放服务的自动播放状态
       // 使用正确的audioPlayerService并检查setAutoPlay方法是否存在
-      import('../services/audioPlayerService').then(({ audioPlayer }) => {
-        if (audioPlayer && typeof audioPlayer.setAutoPlay === 'function') {
-          audioPlayer.setAutoPlay(autoPlayEnabled && voiceEnabled);
-        }
-      });
+      if (audioPlayer && typeof audioPlayer.setAutoPlay === 'function') {
+        audioPlayer.setAutoPlay(autoPlayEnabled && voiceEnabled);
+      }
 
       // 启动辩论
       const success = await startEnhancedDebate(enhancedConfig);
@@ -248,28 +243,43 @@ export const EnhancedDebatePage: React.FC = () => {
         return;
       }
 
+      // 验证必要字段
+      if (!debateTopic || debateTopic.trim().length === 0) {
+        MessagePlugin.error('辩论题目不能为空');
+        setIsSaving(false);
+        return;
+      }
+
+      // 准备保存的数据，确保所有必要字段都有值
+      const debateRecord = {
+        user_id: user.id,
+        topic: debateTopic.trim(),
+        positive_model: positiveModel,
+        negative_model: negativeModel,
+        judge_model: judgeModel,
+        // 主要内容字段
+        content: simplifiedMessages,
+        // 向后兼容字段
+        messages: simplifiedMessages,
+        conversation: simplifiedMessages,
+        // 其他字段
+        is_public: false,
+        positive_arguments: '',
+        negative_arguments: '',
+        summary: '',
+        model_config: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        views: 0,
+        likes: 0,
+        shares: 0
+      };
+
+      console.log('准备保存的辩论记录:', debateRecord);
+
       const { data, error } = await supabase
         .from('debates')
-        .insert([
-          {
-            user_id: user.id,
-            topic: debateTopic.trim() || '未命名辩论',
-            positive_model: positiveModel,
-            negative_model: negativeModel,
-            judge_model: judgeModel,
-            messages: simplifiedMessages,
-            conversation: simplifiedMessages, // 存储完整对话
-            is_public: false, // 默认不公开，保存到个人中心
-            positive_arguments: '', // 保持向后兼容
-            negative_arguments: '', // 保持向后兼容
-            summary: '', // 保持向后兼容
-            model_config: {}, // 保持向后兼容
-            created_at: new Date().toISOString(),
-            views: 0,
-            likes: 0,
-            shares: 0
-          }
-        ])
+        .insert([debateRecord])
         .select();
 
       if (error) {
@@ -867,9 +877,7 @@ export const EnhancedDebatePage: React.FC = () => {
                                     size="small"
                                     onClick={() => {
                                       try {
-                                        import('../services/audioPlayerService').then(({ audioPlayer }) => {
-                                          audioPlayer.playAudio(msg.content, msg.role);
-                                        });
+                                        audioPlayer.playAudio(msg.content, msg.role);
                                       } catch (error) {
                                         console.error('播放音频失败:', error);
                                       }
@@ -1111,9 +1119,7 @@ export const EnhancedDebatePage: React.FC = () => {
                                     size="small"
                                     onClick={() => {
                                       try {
-                                        import('../services/audioPlayerService').then(({ audioPlayer }) => {
-                                          audioPlayer.playAudio(msg.content, msg.role);
-                                        });
+                                        audioPlayer.playAudio(msg.content, msg.role);
                                       } catch (error) {
                                         console.error('播放音频失败:', error);
                                       }
