@@ -18,9 +18,12 @@ class AudioCacheService {
    * 生成缓存键
    */
   generateKey(content: string, role: string): string {
-    // 使用内容和角色生成唯一键
-    const combinedText = `${role}:${content}`;
-    return btoa(encodeURIComponent(combinedText)).substring(0, 32);
+  // 规范化内容并使用内容和角色生成唯一键
+  // 规范化步骤：去除首尾空白、将连续空白折叠为单个空格，确保不同换行/空格形式不会产生不同key
+  const normalized = content ? content.trim().replace(/\s+/g, ' ') : '';
+  const combinedText = `${role}:${normalized}`;
+  // base64 编码后截取，保证键长度可控
+  return btoa(encodeURIComponent(combinedText)).substring(0, 32);
   }
 
   /**

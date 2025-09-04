@@ -34,48 +34,60 @@ class AudioPlayerService {
       // 停止当前播放的音频
       this.stopCurrentAudio();
 
-      // 从缓存获取音频数据
-      const audioData = audioCache.get(content, role);
+      // 从缓存获取音频数据（audioCache内部使用了规范化key）
+      const normalizedContent = content ? content.trim().replace(/\s+/g, ' ') : '';
+      const audioData = audioCache.get(normalizedContent, role);
       if (!audioData) {
         throw new Error('音频数据不存在');
       }
 
-      // 创建音频对象
-      const audio = new Audio();
-      audio.src = `data:audio/mp3;base64,${audioData}`;
+  // 使用base64数据播放（playBase64会负责创建audio并播放）
+  await this.playBase64(audioData);
       
-      // 设置音频事件
+    } catch (error) {
+      console.error('播放音频失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 直接使用 base64 音频数据播放（不通过 cache）
+   */
+  async playBase64(base64Audio: string): Promise<void> {
+    try {
+      this.stopCurrentAudio();
+      const audio = new Audio();
+      audio.src = `data:audio/mp3;base64,${base64Audio}`;
+
       audio.onloadstart = () => {
         console.log('音频开始加载');
       };
-      
+
       audio.oncanplay = () => {
         console.log('音频可以播放');
       };
-      
+
       audio.onplay = () => {
         this._isPlaying = true;
         console.log('音频开始播放');
       };
-      
+
       audio.onended = () => {
         this._isPlaying = false;
         this.currentAudio = null;
         console.log('音频播放结束');
       };
-      
+
       audio.onerror = (error) => {
         this._isPlaying = false;
         this.currentAudio = null;
         console.error('音频播放错误:', error);
       };
 
-      // 播放音频
       this.currentAudio = audio;
       await audio.play();
-      
     } catch (error) {
-      console.error('播放音频失败:', error);
+      console.error('播放base64音频失败:', error);
       throw error;
     }
   }

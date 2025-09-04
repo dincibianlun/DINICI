@@ -57,7 +57,7 @@ export const CaseLibraryPage = () => {
       const { data, error } = await supabase
         .from('debates')
         .select('*')
-        .eq('is_public', true)
+        .eq('is_public', true)  // 确保只获取公开的案例
         .order('created_at', { ascending: false });
       
       console.log('公开案例数据:', { data, error });

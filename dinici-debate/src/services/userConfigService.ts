@@ -29,7 +29,6 @@ export interface UserDebateConfig {
     wordLimits: Record<DebatePhase, number>; // 字数控制
     freeDebateRounds: number;
     voiceEnabled: boolean;
-    autoPlayEnabled?: boolean; // 是否开启自动播放音频
   };
   // 可选：为正反双方提供的简短观点提示（前端可选输入）
   sideHints?: {

@@ -219,31 +219,55 @@ export const EnhancedDebatePage: React.FC = () => {
         debate_type: 'enhanced_7_phases'
       });
 
+      // 确保messages数据不为空
+      if (!messages || messages.length === 0) {
+        MessagePlugin.error('没有辩论内容可保存');
+        setIsSaving(false);
+        return;
+      }
+
       // 简化messages数据，确保可序列化
-      const simplifiedMessages = messages.map(msg => ({
-        role: msg.role,
-        speaker: msg.speaker,
-        content: msg.content,
-        phase: msg.phase,
+      const simplifiedMessages = messages.map((msg, index) => ({
+        id: msg.id || `msg-${index}-${Date.now()}`,
+        role: msg.role || 'unknown',
+        speaker: msg.speaker || '未知发言人',
+        content: msg.content || '',
+        phase: msg.phase || 0,
         timestamp: msg.timestamp || new Date().toISOString(),
-        wordCount: msg.wordCount || 0
+        wordCount: msg.wordCount || 0,
+        hasAudio: msg.hasAudio || false,
+        audioGenerating: msg.audioGenerating || false,
+        audioError: msg.audioError || false
       }));
+
+      // 检查是否有实际内容
+      const hasContent = simplifiedMessages.some(msg => msg.content && msg.content.trim().length > 0);
+      if (!hasContent) {
+        MessagePlugin.error('辩论内容为空，无法保存');
+        setIsSaving(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('debates')
         .insert([
           {
             user_id: user.id,
-            topic: debateTopic,
+            topic: debateTopic.trim() || '未命名辩论',
             positive_model: positiveModel,
             negative_model: negativeModel,
             judge_model: judgeModel,
             messages: simplifiedMessages,
+            conversation: simplifiedMessages, // 存储完整对话
+            is_public: false, // 默认不公开，保存到个人中心
             positive_arguments: '', // 保持向后兼容
             negative_arguments: '', // 保持向后兼容
             summary: '', // 保持向后兼容
-            conversation: simplifiedMessages, // 新增字段，存储完整对话
-            created_at: new Date().toISOString()
+            model_config: {}, // 保持向后兼容
+            created_at: new Date().toISOString(),
+            views: 0,
+            likes: 0,
+            shares: 0
           }
         ])
         .select();
@@ -275,7 +299,8 @@ export const EnhancedDebatePage: React.FC = () => {
             min-width: 300px;
           ">
             <div style="color: #155724; font-size: 1.2rem; margin-bottom: 0.5rem;">✅ 保存成功</div>
-            <div style="color: #155724; margin-bottom: 1rem;">辩论记录已保存到案例库</div>
+            <div style="color: #155724; margin-bottom: 1rem;">辩论记录已保存到个人中心</div>
+            <div style="color: #155724; margin-bottom: 1rem; font-size: 0.9rem;">您可以前往个人中心查看并选择是否公开</div>
             <button onclick="this.parentElement.style.display='none'" 
               style="
                 background: #28a745;
@@ -291,7 +316,7 @@ export const EnhancedDebatePage: React.FC = () => {
         `;
       }
       
-      MessagePlugin.success('辩论记录保存成功！');
+      MessagePlugin.success('辩论记录已保存到个人中心！');
     } catch (error: any) {
       console.error('保存辩论记录失败:', error);
       MessagePlugin.error({
@@ -628,6 +653,84 @@ export const EnhancedDebatePage: React.FC = () => {
                     {isLoading ? '辩论进行中...' : '开始辩论'}
                   </Button>
                 </div>
+                
+                {/* 辩论功能说明卡片 */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '1rem', 
+                  marginTop: '1.5rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ 
+                    flex: 1, 
+                    minWidth: '250px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }}>
+                    <h3 style={{ 
+                      fontSize: '1.25rem', 
+                      fontWeight: 'bold', 
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <span>🤖</span>
+                      <span>辩论功能说明</span>
+                    </h3>
+                    <ul style={{ 
+                      paddingLeft: '1.5rem', 
+                      margin: 0,
+                      fontSize: '0.95rem',
+                      lineHeight: 1.6
+                    }}>
+                      <li>支持7个完整辩论阶段：主持人开场、立论、质询、驳论、自由辩论、总结陈词、裁判评议</li>
+                      <li>多种AI模型可选：GPT-5、Claude 3、DeepSeek等</li>
+                      <li>支持语音合成功能，为不同角色配置专属音色</li>
+                      <li>语音内容不支持保存，仅支持实时播放</li>
+                      <li>自动保存辩论记录到个人历史</li>
+                    </ul>
+                  </div>
+                  
+                  {/* 使用须知卡片 */}
+                  <div style={{ 
+                    flex: 1, 
+                    minWidth: '250px',
+                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    color: 'white',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }}>
+                    <h3 style={{ 
+                      fontSize: '1.25rem', 
+                      fontWeight: 'bold', 
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <span>⚠️</span>
+                      <span>使用须知</span>
+                    </h3>
+                    <ul style={{ 
+                      paddingLeft: '1.5rem', 
+                      margin: 0,
+                      fontSize: '0.95rem',
+                      lineHeight: 1.6
+                    }}>
+                      <li>内容由AI生成，请仔细甄别信息准确性</li>
+                      <li>辩论观点不代表平台立场，仅供参考</li>
+                      <li>不同AI模型性能各异，可能产生不同质量的内容</li>
+                      <li>生成内容可能存在偏见或不准确之处</li>
+                      <li>请勿使用平台生成违反法律法规的内容</li>
+                      <li>保存功能需登录，请妥善保管个人账号</li>
+                    </ul>
+                  </div>
+                </div>
               </>
             )}
           </Card>
@@ -643,158 +746,432 @@ export const EnhancedDebatePage: React.FC = () => {
             marginBottom: '1.5rem',
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)' 
           }}>
-            {messages.map((msg, index) => {
-              // 添加缺失的变量定义和正确的属性访问
-              const isLastMessage = index === messages.length - 1;
-              const isCurrentLoading = isLastMessage && isLoading;
-              
-              return (
-                <div
-                  key={msg.id || index}
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #e9ecef',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    marginBottom: '1rem',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start',
-                    marginBottom: '1rem'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: msg.role === 'positive' ? '#28a745' : 
-                                   msg.role === 'negative' ? '#dc3545' : 
-                                   msg.role === 'judge' ? '#007bff' : '#ffc107',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#ffffff',
-                        fontWeight: 'bold',
-                        fontSize: '0.75rem'
-                      }}>
-                        {msg.role === 'positive' ? '正' : 
-                         msg.role === 'negative' ? '反' : 
-                         msg.role === 'judge' ? '裁' : '主'}
-                      </div>
-                      <div>
-                        <div style={{ 
-                          fontWeight: 'bold', 
-                          color: '#495057',
-                          fontSize: '1.1rem'
+            {/* 微信对话式布局 */}
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              {messages.map((msg, index) => {
+                // 判断消息应该显示在左侧还是右侧
+                const isRightAligned = msg.role === 'positive'; // 正方消息显示在右侧
+                const isCenterAligned = msg.role === 'judge';   // 裁判消息居中显示
+                const isLeftAligned = msg.role === 'negative' || msg.role === 'host'; // 反方和主持人消息显示在左侧
+                
+                return (
+                  <div
+                    key={msg.id || index}
+                    style={{
+                      display: 'flex',
+                      justifyContent: isRightAligned ? 'flex-end' : isCenterAligned ? 'center' : 'flex-start',
+                      alignItems: 'flex-start',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    {/* 左侧对齐的消息 */}
+                    {isLeftAligned && (
+                      <>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: msg.role === 'negative' ? '#dc3545' : '#ffc107',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          fontWeight: 'bold',
+                          fontSize: '0.7rem',
+                          flexShrink: 0,
+                          marginTop: '0.5rem'
                         }}>
-                          {msg.speaker}
+                          {msg.role === 'negative' ? '反' : '主'}
                         </div>
-                        <div style={{ 
-                          fontSize: '0.75rem', 
-                          color: '#6c757d',
-                          marginTop: '0.125rem'
-                        }}>
-                          {new Date(msg.timestamp || Date.now()).toLocaleTimeString()}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Tag 
-                      theme={msg.role === 'positive' ? "success" : 
-                            msg.role === 'negative' ? "danger" : 
-                            msg.role === 'judge' ? "primary" : "warning"}
-                      style={{ 
-                        fontSize: '0.75rem',
-                        padding: '0.125rem 0.5rem'
-                      }}
-                    >
-                      {msg.role === 'positive' ? '正方' : 
-                       msg.role === 'negative' ? '反方' : 
-                       msg.role === 'judge' ? '裁判' : '主持人'}
-                    </Tag>
-                  </div>
-                  
-                  <div style={{ 
-                    lineHeight: 1.8, 
-                    color: '#495057',
-                    fontSize: '1.1rem',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word'
-                  }}>
-                    <StreamingDebateMessage 
-                      role={msg.role}
-                      messageId={msg.id || `msg-${index}`}
-                      content={msg.content}
-                      isStreaming={isCurrentLoading && msg.content === messages[messages.length - 1]?.content}
-                    />
-                    
-                    {/* 音频控件 */}
-                    {(msg.hasAudio || msg.audioGenerating || msg.audioError) && (
-                      <div style={{ marginTop: '0.75rem' }}>
-                        {msg.audioGenerating && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            color: '#888',
-                            fontSize: '0.75rem'
+                        <div
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #e9ecef',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            maxWidth: '70%',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'flex-start',
+                            marginBottom: '0.5rem'
                           }}>
-                            <Loading size="small" />
-                            语音合成中...
+                            <div>
+                              <div style={{ 
+                                fontWeight: 'bold', 
+                                color: '#495057',
+                                fontSize: '1rem'
+                              }}>
+                                {msg.speaker}
+                              </div>
+                              <div style={{ 
+                                fontSize: '0.7rem', 
+                                color: '#6c757d',
+                                marginTop: '0.1rem'
+                              }}>
+                                {new Date(msg.timestamp || Date.now()).toLocaleTimeString()}
+                              </div>
+                            </div>
+                            
+                            <Tag 
+                              theme={msg.role === 'negative' ? "danger" : "warning"}
+                              style={{ 
+                                fontSize: '0.65rem',
+                                padding: '0.1rem 0.4rem'
+                              }}
+                            >
+                              {msg.role === 'negative' ? '反方' : '主持人'}
+                            </Tag>
                           </div>
-                        )}
-                        
-                        {msg.hasAudio && (
-                          <Button
-                            size="small"
-                            onClick={() => {
-                              try {
-                                import('../services/audioPlayerService').then(({ audioPlayer }) => {
-                                  audioPlayer.playAudio(msg.content, msg.role);
-                                });
-                              } catch (error) {
-                                console.error('播放音频失败:', error);
-                              }
-                            }}
-                            style={{
-                              background: '#f8f9fa',
-                              border: '1px solid #6c757d',
-                              color: '#6c757d'
+                          
+                          <div style={{ 
+                            lineHeight: 1.6, 
+                            color: '#333333',
+                            fontSize: '1rem',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word'
+                          }}>
+                            <StreamingDebateMessage 
+                              role={msg.role}
+                              messageId={msg.id || `msg-${index}`}
+                              content={msg.content}
+                              isStreaming={isLoading && index === messages.length - 1}
+                            />
+                            
+                            {/* 音频控件 */}
+                            {(msg.hasAudio || msg.audioGenerating || msg.audioError) && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                {msg.audioGenerating && (
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    color: '#888',
+                                    fontSize: '0.7rem'
+                                  }}>
+                                    <Loading size="small" />
+                                    语音合成中...
+                                  </div>
+                                )}
+                                
+                                {msg.hasAudio && (
+                                  <Button
+                                    size="small"
+                                    onClick={() => {
+                                      try {
+                                        import('../services/audioPlayerService').then(({ audioPlayer }) => {
+                                          audioPlayer.playAudio(msg.content, msg.role);
+                                        });
+                                      } catch (error) {
+                                        console.error('播放音频失败:', error);
+                                      }
+                                    }}
+                                    style={{
+                                      background: '#f8f9fa',
+                                      border: '1px solid #6c757d',
+                                      color: '#6c757d'
+                                    }}
+                                  >
+                                    🔊 播放语音
+                                  </Button>
+                                )}
+                                
+                                {msg.audioError && (
+                                  <span style={{
+                                    color: '#ff6b6b',
+                                    fontSize: '0.7rem'
+                                  }}>
+                                    语音生成失败
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* 阶段和字数信息 */}
+                            <div style={{
+                              marginTop: '0.5rem',
+                              fontSize: '0.65rem',
+                              color: '#666',
+                              textAlign: 'right'
+                            }}>
+                              {PHASE_NAMES[msg.phase as DebatePhase] || '未知阶段'} • {msg.wordCount || 0}字
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* 居中对齐的消息（裁判） */}
+                    {isCenterAligned && (
+                      <div
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #e9ecef',
+                          borderRadius: '12px',
+                          padding: '1rem',
+                          maxWidth: '80%',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                          position: 'relative',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center',
+                          marginBottom: '0.5rem',
+                          padding: '0.5rem',
+                          background: 'rgba(0, 123, 255, 0.1)',
+                          borderRadius: '8px'
+                        }}>
+                          <div style={{ 
+                            fontWeight: 'bold', 
+                            color: '#007bff',
+                            fontSize: '1.1rem',
+                            flex: 1
+                          }}>
+                            {msg.speaker}
+                          </div>
+                          
+                          <Tag 
+                            theme="primary"
+                            style={{ 
+                              fontSize: '0.7rem',
+                              padding: '0.125rem 0.5rem'
                             }}
                           >
-                            🔊 播放语音
-                          </Button>
-                        )}
+                            裁判
+                          </Tag>
+                        </div>
                         
-                        {msg.audioError && (
-                          <span style={{
-                            color: '#ff6b6b',
-                            fontSize: '0.75rem'
+                        <div style={{ 
+                          lineHeight: 1.6, 
+                          color: '#333333',
+                          fontSize: '1rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
+                        }}>
+                          <StreamingDebateMessage 
+                            role={msg.role}
+                            messageId={msg.id || `msg-${index}`}
+                            content={msg.content}
+                            isStreaming={isLoading && index === messages.length - 1}
+                          />
+                          
+                          {/* 音频控件 */}
+                          {(msg.hasAudio || msg.audioGenerating || msg.audioError) && (
+                            <div style={{ marginTop: '0.5rem' }}>
+                              {msg.audioGenerating && (
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  color: '#888',
+                                  fontSize: '0.7rem'
+                                }}>
+                                  <Loading size="small" />
+                                  语音合成中...
+                                </div>
+                              )}
+                              
+                              {msg.hasAudio && (
+                                <Button
+                                  size="small"
+                                  onClick={() => {
+                                    try {
+                                      import('../services/audioPlayerService').then(({ audioPlayer }) => {
+                                        audioPlayer.playAudio(msg.content, msg.role);
+                                      });
+                                    } catch (error) {
+                                      console.error('播放音频失败:', error);
+                                    }
+                                  }}
+                                  style={{
+                                    background: '#f8f9fa',
+                                    border: '1px solid #6c757d',
+                                    color: '#6c757d'
+                                  }}
+                                >
+                                  🔊 播放语音
+                                </Button>
+                              )}
+                              
+                              {msg.audioError && (
+                                <span style={{
+                                  color: '#ff6b6b',
+                                  fontSize: '0.7rem'
+                                }}>
+                                  语音生成失败
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* 阶段和字数信息 */}
+                          <div style={{
+                            marginTop: '0.5rem',
+                            fontSize: '0.65rem',
+                            color: '#666',
+                            textAlign: 'right'
                           }}>
-                            语音生成失败
-                          </span>
-                        )}
+                            {PHASE_NAMES[msg.phase as DebatePhase] || '未知阶段'} • {msg.wordCount || 0}字
+                          </div>
+                        </div>
                       </div>
                     )}
                     
-                    {/* 阶段和字数信息 */}
-                    <div style={{
-                      marginTop: '0.5rem',
-                      fontSize: '0.6875rem',
-                      color: '#666',
-                      textAlign: 'right'
-                    }}>
-                      {PHASE_NAMES[msg.phase as DebatePhase] || '未知阶段'} • {msg.wordCount || 0}字
-                    </div>
+                    {/* 右侧对齐的消息 */}
+                    {isRightAligned && (
+                      <>
+                        <div
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #e9ecef',
+                            borderRadius: '12px',
+                            padding: '1rem',
+                            maxWidth: '70%',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'flex-start',
+                            marginBottom: '0.5rem'
+                          }}>
+                            <div>
+                              <div style={{ 
+                                fontWeight: 'bold', 
+                                color: '#495057',
+                                fontSize: '1rem'
+                              }}>
+                                {msg.speaker}
+                              </div>
+                              <div style={{ 
+                                fontSize: '0.7rem', 
+                                color: '#6c757d',
+                                marginTop: '0.1rem'
+                              }}>
+                                {new Date(msg.timestamp || Date.now()).toLocaleTimeString()}
+                              </div>
+                            </div>
+                            
+                            <Tag 
+                              theme="success"
+                              style={{ 
+                                fontSize: '0.65rem',
+                                padding: '0.1rem 0.4rem'
+                              }}
+                            >
+                              正方
+                            </Tag>
+                          </div>
+                          
+                          <div style={{ 
+                            lineHeight: 1.6, 
+                            color: '#333333',
+                            fontSize: '1rem',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word'
+                          }}>
+                            <StreamingDebateMessage 
+                              role={msg.role}
+                              messageId={msg.id || `msg-${index}`}
+                              content={msg.content}
+                              isStreaming={isLoading && index === messages.length - 1}
+                            />
+                            
+                            {/* 音频控件 */}
+                            {(msg.hasAudio || msg.audioGenerating || msg.audioError) && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                {msg.audioGenerating && (
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    color: '#888',
+                                    fontSize: '0.7rem'
+                                  }}>
+                                    <Loading size="small" />
+                                    语音合成中...
+                                  </div>
+                                )}
+                                
+                                {msg.hasAudio && (
+                                  <Button
+                                    size="small"
+                                    onClick={() => {
+                                      try {
+                                        import('../services/audioPlayerService').then(({ audioPlayer }) => {
+                                          audioPlayer.playAudio(msg.content, msg.role);
+                                        });
+                                      } catch (error) {
+                                        console.error('播放音频失败:', error);
+                                      }
+                                    }}
+                                    style={{
+                                      background: '#f8f9fa',
+                                      border: '1px solid #6c757d',
+                                      color: '#6c757d'
+                                    }}
+                                  >
+                                    🔊 播放语音
+                                  </Button>
+                                )}
+                                
+                                {msg.audioError && (
+                                  <span style={{
+                                    color: '#ff6b6b',
+                                    fontSize: '0.7rem'
+                                  }}>
+                                    语音生成失败
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* 阶段和字数信息 */}
+                            <div style={{
+                              marginTop: '0.5rem',
+                              fontSize: '0.65rem',
+                              color: '#666',
+                              textAlign: 'right'
+                            }}>
+                              {PHASE_NAMES[msg.phase as DebatePhase] || '未知阶段'} • {msg.wordCount || 0}字
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: '#28a745',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          fontWeight: 'bold',
+                          fontSize: '0.7rem',
+                          flexShrink: 0,
+                          marginTop: '0.5rem'
+                        }}>
+                          正
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
 
             {/* 辩论完成后的操作区 */}
             {currentPhase === DebatePhase.COMPLETED && (

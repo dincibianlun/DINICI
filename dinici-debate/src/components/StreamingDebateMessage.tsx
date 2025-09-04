@@ -159,7 +159,8 @@ export const StreamingDebateMessage: React.FC<StreamingDebateMessageProps> = ({
         <span style={{
           color: roleConfig.color,
           fontWeight: 'bold',
-          fontSize: '0.875rem'
+          fontSize: '0.875rem',
+          textShadow: '0 0 2px rgba(0,0,0,0.5)' // 添加文本阴影确保在浅色背景下可见
         }}>
           {roleConfig.label}
         </span>
@@ -243,7 +244,7 @@ export const StreamingDebateMessage: React.FC<StreamingDebateMessageProps> = ({
       
       {/* 内容显示 */}
       <div style={{
-        color: '#ffffff',
+        color: '#333333', // 确保文字在任何背景上都可见
         lineHeight: 1.6,
         fontSize: '0.875rem'
       }}>

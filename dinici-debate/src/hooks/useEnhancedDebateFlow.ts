@@ -3,7 +3,6 @@ import { UserDebateConfig, DebatePhase } from '../services/userConfigService';
 import { callOpenRouterOptimized } from '../services/openRouterService';
 import { synthesizeSpeechWithUserConfig } from '../services/ttsService';
 import { audioCache } from '../services/audioCacheService';
-import { audioPlayer } from '../services/audioPlayerService';
 // supabase not used in this hook
 
 // 辩论角色类型
@@ -22,6 +21,8 @@ export interface DebateMessage {
   hasAudio?: boolean;
   audioGenerating?: boolean;
   audioError?: boolean;
+  // 标记消息是否已最终确定（流式结束后为 true），用于保存/播放就绪判断
+  finalized?: boolean;
 }
 
 // 阶段配置类型
@@ -490,18 +491,22 @@ export const useEnhancedDebateFlow = () => {
         }
       });
       
-      // 流式输出完成后，确保最终内容的一致性
+      // 流式输出完成后，优先使用 state 中聚合的内容（onChunk 已持续写入），fallback 为返回的 content
+      const aggregated = state.messages.find(m => m.id === tempMessage.id);
+      const finalContent = aggregated && aggregated.content && aggregated.content.length > 0 ? aggregated.content : content;
+
+      // 流式输出完成后，确保最终内容的一致性，并标记为已最终化
       updateState(prev => ({
         messages: prev.messages.map(msg => 
           msg.id === tempMessage.id 
-            ? { ...msg, content, wordCount: content.length }
+            ? { ...msg, content: finalContent, wordCount: finalContent.length, finalized: true }
             : msg
         )
       }));
-      
-      // 异步生成语音
+
+      // 异步生成语音（使用最终内容）
       if (config.debateSettings.voiceEnabled) {
-        const finalMessage = { ...tempMessage, content, wordCount: content.length };
+        const finalMessage = { ...tempMessage, content: finalContent, wordCount: finalContent.length, finalized: true };
         generateVoiceAsync(finalMessage, config);
       }
       
@@ -559,14 +564,16 @@ export const useEnhancedDebateFlow = () => {
         wordCount: content.length,
         timestamp: Date.now(),
         speaker: getSpeakerName(responder) + '（回应与质询）'
-      };
+  };
       
       updateState(prev => ({
         messages: [...prev.messages, message]
       }));
       
       if (config.debateSettings.voiceEnabled) {
-        generateVoiceAsync(message, config);
+        // 该消息是一次性生成的内容，已为最终化内容
+        const finalMsg = { ...message, finalized: true };
+        generateVoiceAsync(finalMsg, config);
       }
       
     } catch (error) {
@@ -579,94 +586,50 @@ export const useEnhancedDebateFlow = () => {
    * 支持缓存、状态更新和错误处理
    */
   const generateVoiceAsync = async (message: DebateMessage, config: UserDebateConfig) => {
-    // 不生成太短的文本音频
-    if (message.content.length < 20) {
-      console.log('文本太短，跳过语音生成:', message.content);
+    // 规范化文本并检查长度
+    const text = message.content ? message.content.trim().replace(/\s+/g, ' ') : '';
+    if (!text || text.length < 20) {
+      console.log('文本为空或太短，跳过语音生成:', message.id);
+      updateState(prev => ({
+        messages: prev.messages.map(msg => msg.id === message.id ? { ...msg, audioGenerating: false, audioError: true } : msg)
+      }));
       return;
     }
 
-    // 更新状态：开始生成音频
+    // 标记为正在生成
     updateState(prev => ({
-      messages: prev.messages.map(msg => 
-        msg.id === message.id 
-          ? { ...msg, audioGenerating: true, audioError: false }
-          : msg
-      )
+      messages: prev.messages.map(msg => msg.id === message.id ? { ...msg, audioGenerating: true, audioError: false } : msg)
     }));
 
     try {
-      // 检查缓存
-      let audioData = audioCache.get(message.content, message.role);
+      // 检查缓存（audioCache内部会使用规范化key）
+      let audioData = audioCache.get(text, message.role);
 
       if (audioData) {
         console.log('使用缓存音频:', message.id);
-        // 使用缓存的音频
         updateState(prev => ({
-          messages: prev.messages.map(msg => 
-            msg.id === message.id 
-              ? { 
-                  ...msg, 
-                  hasAudio: true, 
-                  audioGenerating: false,
-                  audioError: false
-                }
-              : msg
-          )
+          messages: prev.messages.map(msg => msg.id === message.id ? { ...msg, hasAudio: true, audioGenerating: false, audioError: false } : msg)
         }));
-        
-        // 自动播放缓存的音频
-        audioPlayer.autoPlayAudio(message.content, message.role);
-      } else {
-        console.log('生成新音频:', message.id, message.role, message.content.substring(0, 50));
-        
-        // 生成新音频
-        audioData = await synthesizeSpeechWithUserConfig(
-          message.content,
-          config.ttsCredentials,
-          message.role
-        );
-        
-        // 保存到缓存
-        audioCache.set(message.content, message.role, audioData);
-        
-        // 更新状态：音频生成成功
-        updateState(prev => ({
-          messages: prev.messages.map(msg => 
-            msg.id === message.id 
-              ? { 
-                  ...msg, 
-                  hasAudio: true, 
-                  audioGenerating: false,
-                  audioError: false
-                }
-              : msg
-          )
-        }));
-        
-        console.log('音频生成成功:', message.id);
-        
-        // 自动播放音频
-        audioPlayer.autoPlayAudio(message.content, message.role);
+        return; // 不自动播放
       }
-      
+
+      console.log('生成新音频:', message.id, message.role, text.substring(0, 50));
+      audioData = await synthesizeSpeechWithUserConfig(text, config.ttsCredentials, message.role);
+
+      // 保存到缓存
+      audioCache.set(text, message.role, audioData);
+
+      // 更新状态
+      updateState(prev => ({
+        messages: prev.messages.map(msg => msg.id === message.id ? { ...msg, hasAudio: true, audioGenerating: false, audioError: false } : msg)
+      }));
+
+      console.log('音频生成并缓存成功:', message.id);
     } catch (error) {
       console.error('语音生成失败:', error);
-      
-      // 更新状态：音频生成失败
       updateState(prev => ({
-        messages: prev.messages.map(msg => 
-          msg.id === message.id 
-            ? { 
-                ...msg, 
-                hasAudio: false, 
-                audioGenerating: false,
-                audioError: true
-              }
-            : msg
-        )
+        messages: prev.messages.map(msg => msg.id === message.id ? { ...msg, hasAudio: false, audioGenerating: false, audioError: true } : msg)
       }));
-      
-      // 语音生成失败不影响辩论流程继续
     }
   };
 

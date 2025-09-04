@@ -140,15 +140,15 @@ export const ProfilePage = () => {
         <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)' }}>
           <div style={{ marginBottom: '0.25rem' }}>
             <span style={{ color: '#28a745', marginRight: '0.5rem' }}>• 正方:</span>
-            {row.positive_model.split('/').pop()}
+            {row.positive_model ? row.positive_model.split('/').pop() : '未知'}
           </div>
           <div style={{ marginBottom: '0.25rem' }}>
             <span style={{ color: '#dc3545', marginRight: '0.5rem' }}>• 反方:</span>
-            {row.negative_model.split('/').pop()}
+            {row.negative_model ? row.negative_model.split('/').pop() : '未知'}
           </div>
           <div>
             <span style={{ color: '#007bff', marginRight: '0.5rem' }}>• 裁判:</span>
-            {row.judge_model.split('/').pop()}
+            {row.judge_model ? row.judge_model.split('/').pop() : '未知'}
           </div>
         </div>
       )
@@ -186,7 +186,7 @@ export const ProfilePage = () => {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '0.5rem', opacity: 0.7 }}>
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="#ff4d4f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          {getLikeCount(row)}
+          {row.likes || 0}
         </div>
       )
     },
@@ -194,17 +194,16 @@ export const ProfilePage = () => {
       colKey: 'created_at',
       title: '创建时间',
       cell: ({ row }: { row: UserDebate }) => {
+        if (!row.created_at) return '未知时间';
+        
         const date = new Date(row.created_at);
         const formattedDate = date.toLocaleDateString();
         const formattedTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         return (
-          <div style={{ 
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '0.9rem'
-          }}>
+          <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.7)' }}>
             <div>{formattedDate}</div>
-            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{formattedTime}</div>
+            <div>{formattedTime}</div>
           </div>
         );
       }
@@ -212,37 +211,34 @@ export const ProfilePage = () => {
     {
       colKey: 'actions',
       title: '操作',
+      width: 200,
       cell: ({ row }: { row: UserDebate }) => (
-        <Space size="small">
-          <Button 
-            theme="primary"
-            variant="text"
+        <Space>
+          <Button
             size="small"
-            onClick={() => handleTogglePublic(row.id, row.is_public)}
-            style={{ 
-              color: '#00ffff', 
-              background: 'rgba(0, 255, 255, 0.1)',
-              border: 'none',
-              padding: '4px 12px',
-              borderRadius: '4px',
-              fontSize: '0.85rem'
+            variant="outline"
+            theme={row.is_public ? 'default' : 'primary'}
+            style={{
+              borderColor: row.is_public ? 'rgba(255, 255, 255, 0.3)' : '#00ffff',
+              color: row.is_public ? 'rgba(255, 255, 255, 0.7)' : '#00ffff',
+              fontSize: '0.8rem',
+              padding: '0.25rem 0.75rem'
             }}
+            onClick={() => handleTogglePublic(row.id, row.is_public)}
           >
             {row.is_public ? '取消公开' : '设为公开'}
           </Button>
-          <Button 
-            theme="danger"
-            variant="text"
+          <Button
             size="small"
-            onClick={() => handleDeleteDebate(row.id)}
-            style={{ 
-              color: '#ff4d4f', 
-              background: 'rgba(255, 77, 79, 0.1)',
-              border: 'none',
-              padding: '4px 12px',
-              borderRadius: '4px',
-              fontSize: '0.85rem'
+            theme="danger"
+            variant="outline"
+            style={{
+              borderColor: '#ff4d4f',
+              color: '#ff4d4f',
+              fontSize: '0.8rem',
+              padding: '0.25rem 0.75rem'
             }}
+            onClick={() => handleDeleteDebate(row.id)}
           >
             删除
           </Button>
